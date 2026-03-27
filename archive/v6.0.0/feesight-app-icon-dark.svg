@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Feesight app icon">
+  <defs>
+    <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2EA8FF"/><stop offset="55%" stop-color="#1663DA"/><stop offset="100%" stop-color="#0B2F8A"/>
+    </linearGradient>
+    <linearGradient id="b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#173FAE"/><stop offset="100%" stop-color="#082669"/>
+    </linearGradient>
+    <linearGradient id="c" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#B9DEFF"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="#07152F"/>
+  <g transform="translate(18 28)">
+    <path d="M18 100C63 44 112 20 171 20s108 24 153 80c-45 56-94 80-153 80S63 156 18 100Z" transform="scale(.72)" fill="url(#a)"/>
+    <path d="M49 100c35-39 74-57 122-57 48 0 87 18 122 57-35 39-74 57-122 57-48 0-87-18-122-57Z" transform="scale(.72)" fill="#F3F8FF"/>
+    <path d="M93 100c0-37 30-67 78-67s78 30 78 67-30 67-78 67-78-30-78-67Z" transform="scale(.72)" fill="url(#b)"/>
+    <path d="M146 63l16-11 16 11-2 18h-28Z" transform="scale(.72)" fill="url(#c)"/>
+    <circle cx="123" cy="73" r="14" fill="url(#c)"/>
+    <path d="M101 118c0-20 12-31 30-31 19 0 31 11 31 31v26h-12v-24c0-10-6-19-19-19s-18 9-18 19v24h-12Z" fill="url(#c)"/>
+    <circle cx="168" cy="91" r="11" fill="url(#c)"/>
+    <path d="M151 123c0-14 9-23 22-23 13 0 22 9 22 23v17h-10v-16c0-8-5-14-12-14-9 0-12 6-12 14v16h-10Z" fill="url(#c)"/>
+  </g>
+</svg>
