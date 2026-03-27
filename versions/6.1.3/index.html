@@ -39,12 +39,6 @@ svg{width:100%;height:auto;display:block}
 .debug-console{margin-top:12px;border:1px solid var(--line);background:#f9fbff;border-radius:10px;padding:10px;max-height:180px;overflow:auto;font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace}
 .debug-console .line{margin:0 0 6px;white-space:pre-wrap}
 .app-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px}
-.link-btn{background:none;border:none;padding:0;color:var(--accent);cursor:pointer;font-weight:700}
-.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
-.modal.open{display:flex}
-.modal-card{width:min(760px,96vw);max-height:84vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
-.version-list{display:grid;gap:10px;margin-top:10px}
-.version-item{border:1px solid var(--line);border-radius:10px;padding:10px}
 @media (max-width:1100px){.g2,.g3,.split-top{grid-template-columns:1fr}}
 </style>
 
@@ -174,22 +168,16 @@ svg{width:100%;height:auto;display:block}
   </section>
 
   <footer class="card app-footer">
-    <button id="versionChip" class="link-btn">Version: loading…</button>
+    <div class="version-row">
+      <span class="pill" id="versionBadge">Version: loading…</span>
+      <select id="versionSelect" style="min-width:220px"></select>
+      <button id="refreshVersions">Refresh history</button>
+    </div>
     <div style="flex:1 1 320px">
+      <div id="versionChanges" class="panel-note"></div>
       <div id="versionStatus" class="status warn">Loading version history…</div>
     </div>
   </footer>
-</div>
-
-<div id="versionModal" class="modal" aria-hidden="true">
-  <div class="modal-card">
-    <div class="row-flex" style="justify-content:space-between;align-items:center">
-      <h3 style="margin:0">Version history</h3>
-      <button id="closeVersionModal">Close</button>
-    </div>
-    <div class="panel-note">Choose a version to open that build. History is loaded from the root <code>index.versions.json</code>.</div>
-    <div id="versionList" class="version-list"></div>
-  </div>
 </div>
 
 <script src="./firebase-config.js"></script>
@@ -314,22 +302,24 @@ function setVersionStatus(msg, cls='ok'){
 }
 function renderVersionUI(){
   if (!VERSION_ARCHIVE?.versions?.length) {
-    document.getElementById('versionChip').textContent = 'Version: unavailable';
-    document.getElementById('versionList').innerHTML = '<div class="version-item">No versions found.</div>';
+    document.getElementById('versionBadge').textContent = 'Version: unavailable';
+    document.getElementById('versionSelect').innerHTML = '<option>No versions found</option>';
+    document.getElementById('versionChanges').textContent = '';
     return;
   }
   const currentFile = getCurrentAppFile();
+  const sel = document.getElementById('versionSelect');
+  sel.innerHTML = VERSION_ARCHIVE.versions.map(v=>`<option value="${v.version}">${v.label || v.version}</option>`).join('');
   const currentEntry = VERSION_ARCHIVE.versions.find(v=>v.appFile === currentFile) || VERSION_ARCHIVE.versions.at(-1);
-  document.getElementById('versionChip').textContent = `Version: ${currentEntry?.version || 'unknown'}`;
-  const cards = VERSION_ARCHIVE.versions.map(entry=>`<div class="version-item">
-      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">
-        <strong>${entry.label || entry.version}</strong>
-        <button class="open-version" data-version="${entry.version}">Open</button>
-      </div>
-      <div class="panel-note">${(entry.changes||[]).join(' • ') || 'No change notes.'}</div>
-    </div>`).join('');
-  document.getElementById('versionList').innerHTML = cards;
-  document.querySelectorAll('.open-version').forEach(btn=>btn.addEventListener('click', ()=>switchToVersion(btn.dataset.version)));
+  sel.value = currentEntry?.version || VERSION_ARCHIVE.versions[0].version;
+  updateVersionDetails();
+}
+function updateVersionDetails(){
+  const selectedVersion = document.getElementById('versionSelect').value;
+  const entry = VERSION_ARCHIVE?.versions?.find(v=>v.version===selectedVersion);
+  if(!entry) return;
+  document.getElementById('versionBadge').textContent = `Version: ${entry.version}`;
+  document.getElementById('versionChanges').innerHTML = (entry.changes?.length ? `Changes: ${entry.changes.join(' • ')}` : 'No change notes for this version.');
 }
 async function loadVersionArchive(){
   try{
@@ -347,9 +337,11 @@ async function loadVersionArchive(){
     debugLog('ERROR', 'Version history fetch failed.', err?.message || String(err));
   }
 }
-function switchToVersion(selectedVersion){
+function switchToSelectedVersion(){
+  const selectedVersion = document.getElementById('versionSelect').value;
   const entry = VERSION_ARCHIVE?.versions?.find(v=>v.version===selectedVersion);
   if(!entry) return;
+  updateVersionDetails();
   if(entry.appFile === getCurrentAppFile()) return;
   const targetUrl = withBust(`${getRootUrl()}${entry.appFile}`);
   debugLog('INFO', 'Navigating to selected version.', targetUrl);
@@ -603,26 +595,19 @@ async function saveCurrentSchoolRemote(){
   if(!firebaseReady || !FIRESTORE || !AUTH || !currentUser) return;
   const p = schoolPayload(); if(!p.name||!p.rows.length) return;
   try{
-    const docId = `${currentUser.uid}_${docIdFromName(p.name)}`;
+    const docId = docIdFromName(p.name);
     const payload = {...p, ownerUid: currentUser.uid, searchableName: normalizeName(p.name), ownerEmail: currentUser.email || null};
     await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db,'schools',docId), payload, {merge:true});
     REMOTE_SCHOOL_INDEX[p.name] = {id:docId, ownerUid:currentUser.uid};
     rebuildSchoolPickers();
     setStatus('Saved locally and synced to Firestore.', 'ok');
-  }catch(err){
-    setStatus(`Saved locally. Firestore sync failed: ${err.message}`, 'warn');
-    debugLog('ERROR', 'Firestore save failed.', err?.message || String(err));
-  }
+  }catch(err){ setStatus(`Saved locally. Firestore sync failed: ${err.message}`, 'warn'); }
 }
 
 async function refreshRemoteSchools(){
   if(!firebaseReady || !FIRESTORE || !AUTH || !currentUser) return;
   try{
-    const q = FIRESTORE.query(
-      FIRESTORE.collection(FIRESTORE.db,'schools'),
-      FIRESTORE.where('ownerUid','==', currentUser.uid),
-      FIRESTORE.orderBy('searchableName')
-    );
+    const q = FIRESTORE.query(FIRESTORE.collection(FIRESTORE.db,'schools'), FIRESTORE.orderBy('searchableName'));
     const snap = await FIRESTORE.getDocs(q);
     REMOTE_SCHOOL_INDEX = {};
     snap.forEach(docSnap=>{
@@ -643,7 +628,6 @@ async function refreshRemoteSchools(){
     setStatus('Local saving is enabled. Cloud school list loaded from Firestore.', 'ok');
   } catch(err){
     setStatus(`Local saving is enabled. Firestore list load failed: ${err.message}`, 'warn');
-    debugLog('ERROR', 'Firestore list load failed.', err?.message || String(err));
   }
 }
 function setStatus(msg, cls){ const el=document.getElementById('saveStatus'); el.className=`status ${cls}`; el.textContent=msg; }
@@ -735,9 +719,8 @@ function wire(){
   document.getElementById('saveSchool').addEventListener('click', async ()=>{ saveCurrentSchoolLocal(); await saveCurrentSchoolRemote(); build(); });
   document.getElementById('recalc').addEventListener('click', build);
   document.getElementById('downloadJson').addEventListener('click', downloadJson);
-  document.getElementById('versionChip').addEventListener('click', ()=>document.getElementById('versionModal').classList.add('open'));
-  document.getElementById('closeVersionModal').addEventListener('click', ()=>document.getElementById('versionModal').classList.remove('open'));
-  document.getElementById('versionModal').addEventListener('click', e=>{ if(e.target.id==='versionModal') e.currentTarget.classList.remove('open'); });
+  document.getElementById('versionSelect').addEventListener('change', switchToSelectedVersion);
+  document.getElementById('refreshVersions').addEventListener('click', loadVersionArchive);
   document.getElementById('feeMode').addEventListener('change', ()=>{ renderFeeRows(currentRows()); build(); queueAutosave(); });
   document.getElementById('fundSelect').addEventListener('change', build);
   document.getElementById('cashRate').addEventListener('input', build);
@@ -759,7 +742,14 @@ function wire(){
       document.getElementById('signInGoogle').disabled = false;
       return;
     }
-    if(!isLikelyAuthorizedDomain()) debugLog('WARN', 'Host may not be in Firebase authorized domains, attempting sign-in anyway.', { host: window.location.hostname || 'file://', authDomain: window.FIREBASE_CONFIG?.authDomain || '' });
+    if(!isLikelyAuthorizedDomain()){
+      const host = window.location.hostname || 'file://';
+      setAuthStatus(`Google sign-in blocked before popup: ${host} is likely not in Firebase authorised domains. Add it in Firebase Console → Authentication → Settings → Authorised domains.`, 'bad');
+      debugLog('WARN', 'Blocked Google sign-in due to likely unauthorized domain.', { host, authDomain: window.FIREBASE_CONFIG?.authDomain || '' });
+      authInFlight = false;
+      document.getElementById('signInGoogle').disabled = false;
+      return;
+    }
     try{
       const provider = new AUTH.GoogleAuthProvider();
       if (isIOSLike() || isStandaloneLike()){
@@ -820,7 +810,7 @@ async function initFirebase(){
   }
   try {
     debugLog('INFO', 'Loading Firebase modules…');
-    const [{ initializeApp }, { getFirestore, doc, setDoc, collection, getDocs, query, where, orderBy }, { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, onAuthStateChanged, signOut }] = await Promise.all([
+    const [{ initializeApp }, { getFirestore, doc, setDoc, collection, getDocs, query, orderBy }, { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, onAuthStateChanged, signOut }] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js'),
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js')
@@ -829,7 +819,7 @@ async function initFirebase(){
     const app = initializeApp(window.FIREBASE_CONFIG);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    FIRESTORE = { db, doc, setDoc, collection, getDocs, query, where, orderBy };
+    FIRESTORE = { db, doc, setDoc, collection, getDocs, query, orderBy };
     AUTH = { auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, onAuthStateChanged, signOut };
     firebaseReady = true;
     setStatus('Local saving is enabled. Sign in to sync with Firestore.', 'warn');
