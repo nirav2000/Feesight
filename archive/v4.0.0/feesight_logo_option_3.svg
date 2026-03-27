@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<rect width="1024" height="1024" rx="220" fill="#06283D"/>
+<circle cx="512" cy="440" r="220" fill="#1fb6ff" opacity="0.12"/>
+<path d="M350 374c0-90 73-163 162-163s162 73 162 163v172H350z" fill="#f8fafc"/>
+<circle cx="424" cy="442" r="42" fill="#06283D"/>
+<circle cx="600" cy="442" r="42" fill="#06283D"/>
+<path d="M430 572h164" stroke="#06283D" stroke-width="30" stroke-linecap="round"/>
+<path d="M306 360l206-106 206 106-206 106z" fill="#ffd166"/>
+<path d="M512 254v212" stroke="#06283D" stroke-width="20"/>
+<path d="M710 515c48 18 82 64 82 118 0 70-58 126-130 126-42 0-80-19-104-51" fill="none" stroke="#ffd166" stroke-width="28" stroke-linecap="round"/>
+<path d="M646 598h40c26 0 48 16 48 38s-22 38-48 38h-44c-20 0-38 11-46 28" fill="none" stroke="#ffd166" stroke-width="24" stroke-linecap="round"/>
+<text x="512" y="892" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="104" text-anchor="middle" fill="#f8fafc">Feesight</text>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<rect width="1024" height="1024" rx="220" fill="#fff7ed"/>
+<rect x="198" y="218" width="628" height="486" rx="48" fill="#ffffff" stroke="#fed7aa" stroke-width="16"/>
+<path d="M264 624h496" stroke="#e2e8f0" stroke-width="16"/>
+<rect x="288" y="302" width="90" height="260" rx="24" fill="#fdba74"/>
+<rect x="430" y="390" width="90" height="172" rx="24" fill="#fb923c"/>
+<rect x="572" y="344" width="90" height="218" rx="24" fill="#f97316"/>
+<rect x="714" y="266" width="90" height="296" rx="24" fill="#ea580c"/>
+<path d="M286 248l226-102 226 102-226 102z" fill="#1d4ed8"/>
+<path d="M736 248v116" stroke="#1d4ed8" stroke-width="20" stroke-linecap="round"/>
+<circle cx="736" cy="384" r="20" fill="#1d4ed8"/>
+<text x="512" y="820" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="104" text-anchor="middle" fill="#9a3412">Feesight</text>
+<text x="512" y="888" font-family="Arial, Helvetica, sans-serif" font-size="42" text-anchor="middle" fill="#7c2d12">See school fees coming</text>
+</svg>
