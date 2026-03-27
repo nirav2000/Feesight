@@ -229,8 +229,6 @@ let VERSION_ARCHIVE = null;
 let authInFlight = false;
 let pendingRemoteSync = false;
 let remoteSyncTimer = null;
-let remoteSyncAttempts = 0;
-const MAX_REMOTE_SYNC_RETRIES = 5;
 
 function debugLog(level, message, data){
   const el = document.getElementById('debugConsole');
@@ -618,11 +616,6 @@ function setKpis(items){ document.getElementById('todayKpis').innerHTML = items.
 function schoolPayload(){ return { name: document.getElementById('schoolName').value.trim(), feeMode: document.getElementById('feeMode').value, rows: currentRows(), updatedAt: new Date().toISOString(), source:'user' }; }
 function saveCurrentSchoolLocal(){ const p=schoolPayload(); if(!p.name||!p.rows.length) return; SCHOOL_DB.schools[p.name]=p; saveDb(SCHOOL_DB); rebuildSchoolPickers(); document.getElementById('schoolPicker').value = p.name; }
 function scheduleRemoteSyncRetry(ms = 4000){
-  if(remoteSyncAttempts >= MAX_REMOTE_SYNC_RETRIES){
-    setStatus(`Saved locally. Stopped auto-sync after ${MAX_REMOTE_SYNC_RETRIES} retries. Use Save school to retry manually.`, 'warn');
-    debugLog('ERROR', 'Remote sync retry limit reached.', { attempts: remoteSyncAttempts });
-    return;
-  }
   clearTimeout(remoteSyncTimer);
   remoteSyncTimer = setTimeout(()=>{ if(currentUser) saveCurrentSchoolRemote(); }, ms);
 }
@@ -631,7 +624,6 @@ function queueAutosave(){
   saveTimer = setTimeout(async ()=>{
     saveCurrentSchoolLocal();
     pendingRemoteSync = true;
-    remoteSyncAttempts = 0;
     await saveCurrentSchoolRemote();
   }, 600);
 }
@@ -655,7 +647,6 @@ async function saveCurrentSchoolRemote(){
     rebuildSchoolPickers();
     setStatus('Saved locally and synced to Firestore.', 'ok');
     pendingRemoteSync = false;
-    remoteSyncAttempts = 0;
     clearTimeout(remoteSyncTimer);
     return true;
   }catch(err){
@@ -667,10 +658,7 @@ async function saveCurrentSchoolRemote(){
       host: window.location.hostname || null
     });
     pendingRemoteSync = true;
-    remoteSyncAttempts += 1;
-    const base = err?.code === 'permission-denied' ? 8000 : 5000;
-    const retryMs = Math.min(base * Math.pow(2, Math.max(0, remoteSyncAttempts - 1)), 120000);
-    scheduleRemoteSyncRetry(retryMs);
+    scheduleRemoteSyncRetry(err?.code === 'permission-denied' ? 7000 : 4000);
     return false;
   }
 }
@@ -678,34 +666,17 @@ async function saveCurrentSchoolRemote(){
 async function refreshRemoteSchools(){
   if(!firebaseReady || !FIRESTORE || !AUTH || !currentUser) return;
   try{
-    let q = FIRESTORE.query(
+    const q = FIRESTORE.query(
       FIRESTORE.collection(FIRESTORE.db,'schools'),
       FIRESTORE.where('ownerUid','==', currentUser.uid),
       FIRESTORE.orderBy('searchableName')
     );
-    let snap;
-    try{
-      snap = await FIRESTORE.getDocs(q);
-    } catch(err){
-      const needsIndex = err?.code === 'failed-precondition' || /requires an index/i.test(err?.message || '');
-      if(!needsIndex) throw err;
-      debugLog('WARN', 'Firestore query needs index; falling back to where(ownerUid) without orderBy.');
-      q = FIRESTORE.query(
-        FIRESTORE.collection(FIRESTORE.db,'schools'),
-        FIRESTORE.where('ownerUid','==', currentUser.uid)
-      );
-      snap = await FIRESTORE.getDocs(q);
-    }
+    const snap = await FIRESTORE.getDocs(q);
     REMOTE_SCHOOL_INDEX = {};
-    const docs = [];
     snap.forEach(docSnap=>{
       const data = docSnap.data();
       if(!data?.name) return;
-      docs.push({id: docSnap.id, data});
-    });
-    docs.sort((a,b)=>String(a.data.searchableName || a.data.name || '').localeCompare(String(b.data.searchableName || b.data.name || '')));
-    docs.forEach(({id,data})=>{
-      REMOTE_SCHOOL_INDEX[data.name] = {id, ownerUid: data.ownerUid || null};
+      REMOTE_SCHOOL_INDEX[data.name] = {id: docSnap.id, ownerUid: data.ownerUid || null};
       SCHOOL_DB.schools[data.name] = {
         name: data.name,
         feeMode: data.feeMode || 'annual',
@@ -813,7 +784,7 @@ function wire(){
   document.getElementById('loadOrley').addEventListener('click', ()=>{ document.getElementById('schoolName').value='Orley Farm School'; document.getElementById('feeMode').value='termly'; renderFeeRows(deepCopy(ORLEY_ROWS)); build(); queueAutosave(); });
   document.getElementById('newSchool').addEventListener('click', newSchool);
   document.getElementById('addRow').addEventListener('click', ()=>{ document.querySelector('#feeInputTable tbody').appendChild(rowEl({year:'',group:'',feeInput:''})); refreshCurrentRowOptions(); });
-  document.getElementById('saveSchool').addEventListener('click', async ()=>{ saveCurrentSchoolLocal(); pendingRemoteSync = true; remoteSyncAttempts = 0; await saveCurrentSchoolRemote(); build(); });
+  document.getElementById('saveSchool').addEventListener('click', async ()=>{ saveCurrentSchoolLocal(); await saveCurrentSchoolRemote(); build(); });
   document.getElementById('recalc').addEventListener('click', build);
   document.getElementById('downloadJson').addEventListener('click', downloadJson);
   document.getElementById('versionChip').addEventListener('click', ()=>document.getElementById('versionModal').classList.add('open'));
@@ -932,7 +903,6 @@ async function initFirebase(){
         setAuthStatus(`Signed in as ${currentUser.displayName || currentUser.email || currentUser.uid}. Firestore sync is active.`, 'ok');
         await refreshRemoteSchools();
         pendingRemoteSync = true;
-        remoteSyncAttempts = 0;
         await saveCurrentSchoolRemote();
       } else {
         debugLog('INFO', 'Auth state changed: signed out.');
