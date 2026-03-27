@@ -1,0 +1,25 @@
+{
+  "app": "index.html",
+  "historyFile": "index.versions.json",
+  "versions": [
+    {
+      "version": "6.0.0",
+      "label": "v6.0.0 (Archived)",
+      "appFile": "versions/6.0.0/index.html",
+      "changes": [
+        "Archived baseline before root history navigation",
+        "Includes iPad auth troubleshooting copy"
+      ]
+    },
+    {
+      "version": "6.1.1",
+      "label": "v6.1.1 (Current)",
+      "appFile": "index.html",
+      "changes": [
+        "Single-logo header",
+        "Root canonical version archive navigation",
+        "Auth unauthorized-domain guidance in debug status"
+      ]
+    }
+  ]
+}

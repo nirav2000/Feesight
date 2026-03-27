@@ -34,36 +34,15 @@ table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #e7edf6
 .status{margin-top:8px;font-size:12px}.status.ok{color:var(--good)}.status.warn{color:var(--warn)}.status.bad{color:var(--bad)}
 svg{width:100%;height:auto;display:block}
 .brand-badges{display:flex;gap:8px;flex-wrap:wrap}
-.brand-logo{height:64px;width:auto;max-width:220px}
-.split-top{display:grid;gap:16px;grid-template-columns:1.05fr 1fr;align-items:stretch}
-.version-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.debug-console{margin-top:12px;border:1px solid var(--line);background:#f9fbff;border-radius:10px;padding:10px;max-height:180px;overflow:auto;font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace}
-.debug-console .line{margin:0 0 6px;white-space:pre-wrap}
-@media (max-width:1100px){.g2,.g3,.split-top{grid-template-columns:1fr}}
+@media (max-width:1100px){.g2,.g3{grid-template-columns:1fr}}
 </style>
 
 </head>
 <body>
 <div class="wrap grid">
-  <section class="card brand-card">
-    <div class="brand-wrap">
-      <div class="brand-copy">
-        <h1>Feesight</h1>
-        <p class="sub">School fees analyser with drawdown, stress testing, and fund comparisons. Stored fund return points are source-backed and net of fund fees where stated.</p>
-      </div>
-      <img class="brand-logo" src="./feesight-logo-light.svg" alt="Feesight logo">
-    </div>
-  </section>
-
   <section class="card">
-    <h2>Version control and archive</h2>
-    <div class="version-row">
-      <span class="pill" id="versionBadge">Version: loading…</span>
-      <select id="versionSelect" style="min-width:220px"></select>
-      <button id="refreshVersions">Refresh history</button>
-    </div>
-    <div id="versionChanges" class="panel-note"></div>
-    <div id="versionStatus" class="status warn">Loading version history…</div>
+    <h1>Feesight</h1>
+    <p class="sub">School fees analyser with drawdown, stress testing, and fund comparisons. Stored fund return points are source-backed and net of fund fees where stated.</p>
   </section>
 
   <section class="card">
@@ -75,47 +54,8 @@ svg{width:100%;height:auto;display:block}
       <div style="flex:0 0 auto"><button id="signInGoogle" class="primary">Sign in with Google</button></div>
       <div style="flex:0 0 auto"><button id="signOutBtn">Sign out</button></div>
     </div>
-    <details style="margin-top:10px">
-      <summary>In-app debug console</summary>
-      <div id="debugConsole" class="debug-console"></div>
-    </details>
     <p class="sub">Cloud school records are protected with Firebase Authentication and Firestore rules. Local saving remains on even when signed out. On iPad and iPhone the app prefers redirect sign-in for better reliability. Use localhost or a hosted Firebase-authorised domain.</p>
   </section>
-
-  <div class="split-top">
-    <section class="card">
-      <h2>1) Inputs</h2>
-      <div class="row-flex">
-        <div><label>School name</label><input id="schoolName" type="text" list="schoolSuggestions"><datalist id="schoolSuggestions"></datalist></div>
-        <div><label>Saved schools</label><select id="schoolPicker"></select></div>
-        <div><label>Fee mode</label><select id="feeMode"><option value="annual">Annual</option><option value="termly">Termly</option></select></div>
-      </div>
-      <div class="row-flex">
-        <div><label>Fund / cash option</label><select id="fundSelect"></select></div>
-        <div><label>Cash annual rate (%)</label><input id="cashRate" type="number" value="3.75" step="0.01"></div>
-        <div><label>Extend fees to</label><select id="endGroup"><option>Y6</option><option>Y7</option><option>Y8</option></select></div>
-      </div>
-      <div class="row-flex">
-        <div><label>Plan from row</label><select id="currentRow"></select></div>
-        <div><label>Remaining terms in current row</label><select id="remainingTerms"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
-        <div><label>Monte Carlo runs</label><input id="simCount" type="number" value="3000" step="100"></div>
-      </div>
-      <div class="row-flex">
-        <div><label>Curve start capital (£)</label><input id="capitalMin" type="number" value="60000" step="1000"></div>
-        <div><label>Curve end capital (£)</label><input id="capitalMax" type="number" value="220000" step="1000"></div>
-        <div><label>Curve step (£)</label><input id="capitalStep" type="number" value="5000" step="500"></div>
-      </div>
-      <div class="toolbar">
-        <button id="loadOrley" class="primary">Load Orley sample</button>
-        <button id="addRow">Add fee row</button>
-        <button id="newSchool">New school</button>
-        <button id="saveSchool">Save school</button>
-        <button id="recalc">Recalculate</button>
-        <button id="downloadJson">Download scenario JSON</button>
-      </div>
-      <div id="saveStatus" class="status warn">Local saving is enabled. Sign in to sync with Firestore.</div>
-      <p class="panel-note">For the sample, “from today” starts from 2025-26 and assumes one term remains in that year.</p>
-    </section>
 
     <section class="card">
       <h2>2) Fund data points and sources</h2>
@@ -204,7 +144,6 @@ const isIOSLike = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigat
 const isStandaloneLike = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
 const STORAGE_KEY = 'feesight.schooldb.v2';
-const VERSION_HISTORY_FILE = 'index.versions.json';
 let FIRESTORE = null;
 let AUTH = null;
 let firebaseReady = false;
@@ -212,16 +151,6 @@ let currentUser = null;
 let remoteReady = false;
 let REMOTE_SCHOOL_INDEX = {};
 let saveTimer = null;
-let VERSION_ARCHIVE = null;
-
-function debugLog(level, message, data){
-  const el = document.getElementById('debugConsole');
-  const ts = new Date().toISOString().replace('T',' ').slice(0,19);
-  const line = document.createElement('div');
-  line.className = 'line';
-  line.textContent = `[${ts}] [${level}] ${message}${data ? ` | ${typeof data === 'string' ? data : JSON.stringify(data)}` : ''}`;
-  if(el){ el.prepend(line); while(el.childNodes.length > 100) el.removeChild(el.lastChild); }
-}
 
 const FUND_LIBRARY = {
   VUAG:{label:'Vanguard S&P 500 UCITS ETF (VUAG)',type:'equity',currency:'USD base / GBP line available',ocf:0.07,sourceNote:'Vanguard factsheet, net of expenses, rolling 12-month returns to 28 Feb 2026.',sourceUrl:'https://fund-docs.vanguard.com/SandP_500_UCITS_ETF_USD_Accumulating_9694_EU_INT_UK_EN.pdf',returnLabels:['01 Mar 2020–28 Feb 2021','01 Mar 2021–28 Feb 2022','01 Mar 2022–28 Feb 2023','01 Mar 2023–29 Feb 2024','01 Mar 2024–28 Feb 2025','01 Mar 2025–28 Feb 2026'],returns:[30.92,16.07,-7.97,30.07,18.09,16.69]},
@@ -248,94 +177,9 @@ function defaultDb(){
     }
   };
 }
-function loadDb(){
-  const fallback = defaultDb();
-  try{
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-    return {schools:{...fallback.schools, ...(saved.schools || {})}};
-  }catch(e){
-    return fallback;
-  }
-}
+function loadDb(){ try{return JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultDb();}catch(e){return defaultDb();} }
 function saveDb(db){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
 let SCHOOL_DB = loadDb();
-
-function getRootPathPrefix(){
-  const parts = window.location.pathname.split('/').filter(Boolean);
-  const dirParts = parts.slice(0, -1);
-  const versionsIdx = dirParts.indexOf('versions');
-  if (versionsIdx === -1) return '';
-  const up = dirParts.length - versionsIdx;
-  return '../'.repeat(up);
-}
-function getRootUrl(){
-  return new URL(getRootPathPrefix() || '.', window.location.href).href;
-}
-function withBust(url){
-  const u = new URL(url, window.location.href);
-  u.searchParams.set('v', String(Date.now()));
-  return u.toString();
-}
-function getCurrentAppFile(){
-  const parts = window.location.pathname.split('/').filter(Boolean);
-  const fileName = parts.at(-1) || 'index.html';
-  const versionsIdx = parts.indexOf('versions');
-  if (versionsIdx >= 0 && parts[versionsIdx + 1]) return `versions/${parts[versionsIdx + 1]}/${fileName}`;
-  return fileName;
-}
-
-function setVersionStatus(msg, cls='ok'){
-  const el = document.getElementById('versionStatus');
-  el.className = `status ${cls}`;
-  el.textContent = msg;
-}
-function renderVersionUI(){
-  if (!VERSION_ARCHIVE?.versions?.length) {
-    document.getElementById('versionBadge').textContent = 'Version: unavailable';
-    document.getElementById('versionSelect').innerHTML = '<option>No versions found</option>';
-    document.getElementById('versionChanges').textContent = '';
-    return;
-  }
-  const currentFile = getCurrentAppFile();
-  const sel = document.getElementById('versionSelect');
-  sel.innerHTML = VERSION_ARCHIVE.versions.map(v=>`<option value="${v.version}">${v.label || v.version}</option>`).join('');
-  const currentEntry = VERSION_ARCHIVE.versions.find(v=>v.appFile === currentFile) || VERSION_ARCHIVE.versions.at(-1);
-  sel.value = currentEntry?.version || VERSION_ARCHIVE.versions[0].version;
-  updateVersionDetails();
-}
-function updateVersionDetails(){
-  const selectedVersion = document.getElementById('versionSelect').value;
-  const entry = VERSION_ARCHIVE?.versions?.find(v=>v.version===selectedVersion);
-  if(!entry) return;
-  document.getElementById('versionBadge').textContent = `Version: ${entry.version}`;
-  document.getElementById('versionChanges').innerHTML = (entry.changes?.length ? `Changes: ${entry.changes.join(' • ')}` : 'No change notes for this version.');
-}
-async function loadVersionArchive(){
-  try{
-    const historyUrl = withBust(`${getRootUrl()}${VERSION_HISTORY_FILE}`);
-    debugLog('INFO', 'Fetching version history.', historyUrl);
-    const res = await fetch(historyUrl, { cache: 'no-store' });
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    VERSION_ARCHIVE = await res.json();
-    renderVersionUI();
-    setVersionStatus(`Loaded ${VERSION_ARCHIVE.versions?.length || 0} versions from ${VERSION_HISTORY_FILE}.`, 'ok');
-  } catch(err){
-    VERSION_ARCHIVE = null;
-    renderVersionUI();
-    setVersionStatus(`Version history could not be loaded: ${err.message}`, 'warn');
-    debugLog('ERROR', 'Version history fetch failed.', err?.message || String(err));
-  }
-}
-function switchToSelectedVersion(){
-  const selectedVersion = document.getElementById('versionSelect').value;
-  const entry = VERSION_ARCHIVE?.versions?.find(v=>v.version===selectedVersion);
-  if(!entry) return;
-  updateVersionDetails();
-  if(entry.appFile === getCurrentAppFile()) return;
-  const targetUrl = withBust(`${getRootUrl()}${entry.appFile}`);
-  debugLog('INFO', 'Navigating to selected version.', targetUrl);
-  window.location.href = targetUrl;
-}
 
 function normalizeName(s){ return (s||'').trim().toLowerCase(); }
 function docIdFromName(name){ return normalizeName(name).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,120) || 'school'; }
@@ -348,7 +192,7 @@ function feeValueHeader(){ return document.getElementById('feeMode').value === '
 function initFundSelect(){
   const sel = document.getElementById('fundSelect');
   sel.innerHTML = Object.entries(FUND_LIBRARY).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
-  sel.value = sel.value || 'VUAG';
+  sel.value = 'VUAG';
 }
 
 function rebuildSchoolPickers(){
@@ -696,7 +540,6 @@ function build(){
 
 function wire(){
   initFundSelect(); rebuildSchoolPickers();
-  loadVersionArchive();
   const defaultSchool = SCHOOL_DB.schools['Orley Farm School'];
   document.getElementById('schoolName').value='Orley Farm School';
   document.getElementById('schoolPicker').value='Orley Farm School';
@@ -708,47 +551,13 @@ function wire(){
   document.getElementById('saveSchool').addEventListener('click', async ()=>{ saveCurrentSchoolLocal(); await saveCurrentSchoolRemote(); build(); });
   document.getElementById('recalc').addEventListener('click', build);
   document.getElementById('downloadJson').addEventListener('click', downloadJson);
-  document.getElementById('versionSelect').addEventListener('change', switchToSelectedVersion);
-  document.getElementById('refreshVersions').addEventListener('click', loadVersionArchive);
   document.getElementById('feeMode').addEventListener('change', ()=>{ renderFeeRows(currentRows()); build(); queueAutosave(); });
   document.getElementById('fundSelect').addEventListener('change', build);
   document.getElementById('cashRate').addEventListener('input', build);
   ['endGroup','currentRow','remainingTerms','capitalMin','capitalMax','capitalStep','simCount'].forEach(id=>document.getElementById(id).addEventListener('input', build));
   document.getElementById('schoolPicker').addEventListener('change', e=>{ if(e.target.value) loadSchoolByName(e.target.value); });
   document.getElementById('schoolName').addEventListener('input', ()=>{ const exact = unionSchoolNames().find(n=>normalizeName(n)===normalizeName(document.getElementById('schoolName').value)); if(exact) document.getElementById('schoolPicker').value = exact; queueAutosave(); });
-  document.getElementById('signInGoogle').addEventListener('click', async ()=>{
-    debugLog('INFO', 'Google sign-in button clicked.');
-    if(!AUTH || !AUTH.auth){
-      setAuthStatus('Firebase Auth is not ready yet. Check debug console for details.', 'warn');
-      debugLog('WARN', 'AUTH not ready when clicking sign-in.');
-      return;
-    }
-    try{
-      const provider = new AUTH.GoogleAuthProvider();
-      if (isIOSLike() || isStandaloneLike()){
-        debugLog('INFO', 'Using redirect sign-in (iOS/standalone).');
-        await AUTH.signInWithRedirect(AUTH.auth, provider);
-        return;
-      }
-      debugLog('INFO', 'Attempting popup sign-in.');
-      await AUTH.signInWithPopup(AUTH.auth, provider);
-      debugLog('INFO', 'Popup sign-in returned successfully.');
-    } catch(err){
-      debugLog('ERROR', 'Google sign-in failed.', err?.message || String(err));
-      if(err?.code === 'auth/unauthorized-domain'){
-        const host = window.location.hostname || 'file://';
-        setAuthStatus(`Google sign-in blocked: ${host} is not an authorised domain in Firebase Auth. Add it in Firebase Console → Authentication → Settings → Authorised domains.`, 'bad');
-        debugLog('WARN', 'Unauthorized domain for Firebase Auth.', { host, origin: window.location.origin });
-        return;
-      }
-      if(err?.code === 'auth/popup-blocked' || err?.code === 'auth/cancelled-popup-request'){
-        debugLog('WARN', 'Popup blocked/cancelled, retrying with redirect.');
-        await AUTH.signInWithRedirect(AUTH.auth, new AUTH.GoogleAuthProvider());
-        return;
-      }
-      setAuthStatus(`Google sign-in failed: ${err.message}`, 'warn');
-    }
-  });
+  document.getElementById('signInGoogle').addEventListener('click', async ()=>{ if(AUTH?.signInWithPopup && AUTH?.GoogleAuthProvider){ try{ await AUTH.signInWithPopup(AUTH.auth, new AUTH.GoogleAuthProvider()); } catch(err){ setAuthStatus(`Google sign-in failed: ${err.message}`, 'warn'); } } });
   document.getElementById('signOutBtn').addEventListener('click', async ()=>{ if(AUTH?.signOut && AUTH?.auth){ await AUTH.signOut(AUTH.auth); } });
   build();
 }
@@ -757,22 +566,13 @@ wire();
 </script>
 <script type="module">
 async function initFirebase(){
-  if (!window.FIREBASE_CONFIG || !window.FIREBASE_CONFIG.projectId){
-    debugLog('WARN', 'Firebase config missing. Auth and cloud sync disabled.');
-    return;
-  }
-  if (window.location.protocol === 'file:'){
-    debugLog('WARN', 'Running from file:// URL. Firebase Auth redirect/popup will usually fail. Serve via localhost or hosted HTTPS.');
-    setAuthStatus('Auth warning: running from file://. Use localhost or a Firebase-authorised HTTPS domain.', 'warn');
-  }
+  if (!window.FIREBASE_CONFIG || !window.FIREBASE_CONFIG.projectId) return;
   try {
-    debugLog('INFO', 'Loading Firebase modules…');
     const [{ initializeApp }, { getFirestore, doc, setDoc, collection, getDocs, query, orderBy }, { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut }] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js'),
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js')
     ]);
-    debugLog('INFO', 'Firebase modules loaded.');
     const app = initializeApp(window.FIREBASE_CONFIG);
     const db = getFirestore(app);
     const auth = getAuth(app);
@@ -780,32 +580,21 @@ async function initFirebase(){
     AUTH = { auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut };
     firebaseReady = true;
     setStatus('Local saving is enabled. Sign in to sync with Firestore.', 'warn');
-    try {
-      const redirectResult = await getRedirectResult(auth);
-      if (redirectResult?.user) {
-        debugLog('INFO', 'Redirect sign-in result received.', redirectResult.user.uid);
-        setAuthStatus(`Signed in as ${redirectResult.user.displayName || redirectResult.user.email || redirectResult.user.uid}. Firestore sync is active.`, 'ok');
-      }
-    } catch (redirErr) {
-      debugLog('ERROR', 'Redirect sign-in result failed.', redirErr?.message || String(redirErr));
-      setAuthStatus(`Google sign-in failed: ${redirErr.message}`, 'warn');
-    }
+    try { const redirectResult = await getRedirectResult(auth); if (redirectResult?.user) { setAuthStatus(`Signed in as ${redirectResult.user.displayName || redirectResult.user.email || redirectResult.user.uid}. Firestore sync is active.`, 'ok'); } } catch (redirErr) { setAuthStatus(`Google sign-in failed: ${redirErr.message}`, 'warn'); }
     onAuthStateChanged(auth, async user => {
       currentUser = user || null;
       if (currentUser) {
-        debugLog('INFO', 'Auth state changed: signed in.', currentUser.uid);
         setAuthStatus(`Signed in as ${currentUser.displayName || currentUser.email || currentUser.uid}. Firestore sync is active.`, 'ok');
         await refreshRemoteSchools();
         await saveCurrentSchoolRemote();
       } else {
-        debugLog('INFO', 'Auth state changed: signed out.');
         remoteReady = false;
         setAuthStatus('Not signed in. Local saving works now. Sign in to sync schools to Firestore and search the shared cloud school list.', 'warn');
         setStatus('Local saving is enabled. Sign in to sync with Firestore.', 'warn');
+    try { const redirectResult = await getRedirectResult(auth); if (redirectResult?.user) { setAuthStatus(`Signed in as ${redirectResult.user.displayName || redirectResult.user.email || redirectResult.user.uid}. Firestore sync is active.`, 'ok'); } } catch (redirErr) { setAuthStatus(`Google sign-in failed: ${redirErr.message}`, 'warn'); }
       }
     });
   } catch (err) {
-    debugLog('ERROR', 'Firebase initialization failed.', err?.message || String(err));
     setStatus(`Local saving is enabled. Firebase could not start: ${err.message}`, 'warn');
     setAuthStatus(`Firebase Auth could not start: ${err.message}`, 'warn');
   }
