@@ -45,41 +45,44 @@ svg{width:100%;height:auto;display:block}
 .modal-card{width:min(760px,96vw);max-height:84vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
 .version-list{display:grid;gap:10px;margin-top:10px}
 .version-item{border:1px solid var(--line);border-radius:10px;padding:10px}
-.user-menu{position:relative}
-.user-pop{position:absolute;right:0;top:40px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;display:none;min-width:180px;z-index:25}
-.user-pop.open{display:block}
-.input-panel{position:sticky;top:8px;z-index:5}
 @media (max-width:1100px){.g2,.g3,.split-top{grid-template-columns:1fr}}
 </style>
 
 </head>
 <body>
 <div class="wrap grid">
-  <section class="brand-card" style="padding:4px 0 0">
+  <section class="card brand-card">
     <div class="brand-wrap">
       <img class="brand-logo" src="./feesight-logo-light.svg" alt="Feesight logo">
       <div class="brand-copy">
         <p class="sub">School fees analyser with drawdown, stress testing, and fund comparisons. Stored fund return points are source-backed and net of fund fees where stated.</p>
       </div>
-      <div class="user-menu">
-        <button id="userMenuBtn" class="small">👤</button>
-        <div id="userMenuPop" class="user-pop">
-          <div id="authStatus" class="status warn" style="margin:0 0 8px"></div>
-          <button id="signInGoogle" class="primary" style="width:100%;margin-bottom:6px">Sign in with Google</button>
-          <button id="signOutBtn" style="width:100%">Sign out</button>
-        </div>
-      </div>
     </div>
   </section>
-  <details id="authDebugDetails" style="margin-top:4px;display:none">
-    <summary>In-app debug console</summary>
-    <div id="debugConsole" class="debug-console"></div>
-  </details>
 
-  <div>
-    <section class="card input-panel">
+  <section class="card">
+    <h2>Account and cloud sync</h2>
+    <div class="row-flex">
+      <div style="flex:2 1 280px">
+        <div id="authStatus" class="status warn">Not signed in. Local saving works now. Sign in to sync schools to Firestore and search the shared cloud school list.</div>
+      </div>
+      <div style="flex:0 0 auto"><button id="signInGoogle" class="primary">Sign in with Google</button></div>
+      <div style="flex:0 0 auto"><button id="signInGuest">Continue as guest</button></div>
+      <div style="flex:0 0 auto"><button id="signOutBtn">Sign out</button></div>
+    </div>
+    <details id="authDebugDetails" style="margin-top:10px;display:none">
+      <summary>In-app debug console</summary>
+      <div id="debugConsole" class="debug-console"></div>
+    </details>
+    <p class="sub">Cloud school records are protected with Firebase Authentication and Firestore rules. Local saving remains on even when signed out. On iPad and iPhone the app prefers redirect sign-in for better reliability. Use localhost or a hosted Firebase-authorised domain.</p>
+  </section>
+
+  <div class="split-top">
+    <section class="card">
+      <h2>1) Inputs</h2>
       <div class="row-flex">
-        <div><label>School</label><input id="schoolName" type="text" list="schoolSuggestions" placeholder="Type or select saved school"><datalist id="schoolSuggestions"></datalist></div>
+        <div><label>School name</label><input id="schoolName" type="text" list="schoolSuggestions"><datalist id="schoolSuggestions"></datalist></div>
+        <div><label>Saved schools</label><select id="schoolPicker"></select></div>
         <div><label>Fee mode</label><select id="feeMode"><option value="annual">Annual</option><option value="termly">Termly</option></select></div>
       </div>
       <div class="row-flex">
@@ -99,6 +102,7 @@ svg{width:100%;height:auto;display:block}
       </div>
       <div class="toolbar">
         <button id="loadOrley" class="primary">Load Orley sample</button>
+        <button id="addRow">Add fee row</button>
         <button id="newSchool">New school</button>
         <button id="saveSchool">Save school</button>
         <button id="recalc">Recalculate</button>
@@ -111,7 +115,6 @@ svg{width:100%;height:auto;display:block}
     <section class="card">
       <h2>2) Fund data points and sources</h2>
       <div id="fundMeta"></div>
-      <div id="fundTrendChart" style="margin:10px 0"></div>
       <details open>
         <summary>Stored return data points used by the model</summary>
         <div class="table-wrap"><table id="fundDataTable"></table></div>
@@ -123,7 +126,6 @@ svg{width:100%;height:auto;display:block}
   <section class="card">
     <h2>3) School fee table</h2>
     <div class="meta-line"><span class="pill" id="feeModeBadge"></span><span class="pill" id="schoolCountBadge"></span></div>
-    <div class="toolbar" style="margin-bottom:8px"><button id="addRow">Add fee row</button></div>
     <div class="table-wrap"><table id="feeInputTable"><thead><tr><th>Academic Year</th><th>Year Group</th><th id="feeValueHeader">Annual Fee (£)</th><th>Annualised Fee (£)</th><th></th></tr></thead><tbody></tbody></table></div>
   </section>
 
@@ -426,18 +428,6 @@ function switchToVersion(selectedVersion){
 function normalizeName(s){ return (s||'').trim().toLowerCase(); }
 function docIdFromName(name){ return normalizeName(name).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,120) || 'school'; }
 function setAuthStatus(msg, cls){ const el=document.getElementById('authStatus'); if(el){ el.className=`status ${cls}`; el.textContent=msg; } }
-function updateUserMenuAvatar(user){
-  const btn = document.getElementById('userMenuBtn');
-  if(!btn) return;
-  if(user?.photoURL){
-    btn.innerHTML = `<img src="${user.photoURL}" alt="user" style="width:22px;height:22px;border-radius:50%;vertical-align:middle">`;
-  } else if(user){
-    const label = (user.displayName || user.email || 'U').trim().charAt(0).toUpperCase();
-    btn.textContent = label || 'U';
-  } else {
-    btn.textContent = '👤';
-  }
-}
 function unionSchoolNames(){ const local = Object.keys(SCHOOL_DB.schools); const remote = Object.keys(REMOTE_SCHOOL_INDEX); return [...new Set([...local, ...remote])].sort((a,b)=>a.localeCompare(b)); }
 function annualisedFee(row){ return Number(row.feeInput||0) * (document.getElementById('feeMode').value === 'termly' ? 3 : 1); }
 function displayFeeValue(row){ return Number(row.feeInput||0); }
@@ -452,8 +442,8 @@ function initFundSelect(){
 function rebuildSchoolPickers(){
   const names = unionSchoolNames();
   document.getElementById('schoolSuggestions').innerHTML = names.map(n=>`<option value="${n}"></option>`).join('');
-  const currentName = document.getElementById('schoolName')?.value?.trim() || names[0] || 'No school selected';
-  document.getElementById('schoolCountBadge').textContent = `🏫 ${currentName}`;
+  document.getElementById('schoolPicker').innerHTML = `<option value="">Select saved school</option>` + names.map(n=>`<option value="${n}">${n}</option>`).join('');
+  document.getElementById('schoolCountBadge').textContent = `${names.length} known school${names.length===1?'':'s'}`;
 }
 
 function rowEl(row){
@@ -554,17 +544,6 @@ function populateFundMeta(fund){
     <p class="source">Source: <a href="${fund.sourceUrl}" target="_blank" rel="noopener">${fund.sourceUrl}</a></p>`;
   const dataRows = (fund.returns.length?fund.returnLabels.map((label,i)=>`<tr><td>${label}</td><td>${pct(fund.returns[i])}</td></tr>`):`<tr><td>Custom annual cash rate</td><td>${pct(Number(document.getElementById('cashRate').value||0))}</td></tr>`);
   document.getElementById('fundDataTable').innerHTML = `<thead><tr><th>Period</th><th>Return used</th></tr></thead><tbody>${Array.isArray(dataRows)?dataRows.join(''):dataRows}</tbody>`;
-  renderFundTrendChart(fund);
-}
-function renderFundTrendChart(fund){
-  const returns = fund.returns.length ? fund.returns : [Number(document.getElementById('cashRate').value||0)];
-  let value = 100;
-  const pts = returns.map(r=>{ value*=1+r/100; return value; });
-  const min = Math.min(...pts), max = Math.max(...pts), W=720, H=180, p=16;
-  const x=i=>p + (i/(Math.max(1,pts.length-1))) * (W-2*p);
-  const y=v=>H-p - ((v-min)/(Math.max(1e-9,max-min))) * (H-2*p);
-  const d = pts.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-  document.getElementById('fundTrendChart').innerHTML = `<svg viewBox="0 0 ${W} ${H}"><rect x="0" y="0" width="${W}" height="${H}" fill="#f8fbff"/><path d="${d}" fill="none" stroke="#2952cc" stroke-width="3"/><text x="${p}" y="${p+8}" font-size="12" fill="#667085">Indexed growth of £100 using stored annual returns</text></svg>`;
 }
 
 function updatedComparison(rows, fund){
@@ -686,7 +665,7 @@ function renderTermTable(rows, fund){
 function setKpis(items){ document.getElementById('todayKpis').innerHTML = items.map(k=>`<div class="kpi"><div class="muted">${k.label}</div><div class="v ${k.className||''}">${k.value}</div></div>`).join(''); }
 
 function schoolPayload(){ return { name: document.getElementById('schoolName').value.trim(), feeMode: document.getElementById('feeMode').value, rows: currentRows(), updatedAt: new Date().toISOString(), source:'user' }; }
-function saveCurrentSchoolLocal(){ const p=schoolPayload(); if(!p.name||!p.rows.length) return; SCHOOL_DB.schools[p.name]=p; saveDb(SCHOOL_DB); rebuildSchoolPickers(); }
+function saveCurrentSchoolLocal(){ const p=schoolPayload(); if(!p.name||!p.rows.length) return; SCHOOL_DB.schools[p.name]=p; saveDb(SCHOOL_DB); rebuildSchoolPickers(); document.getElementById('schoolPicker').value = p.name; }
 function scheduleRemoteSyncRetry(ms = 4000){
   if(remoteSyncAttempts >= MAX_REMOTE_SYNC_RETRIES){
     setStatus(`Saved locally. Stopped auto-sync after ${MAX_REMOTE_SYNC_RETRIES} retries. Use Save school to retry manually.`, 'warn');
@@ -890,6 +869,7 @@ function wire(){
   loadVersionArchive();
   const defaultSchool = SCHOOL_DB.schools['Orley Farm School'];
   document.getElementById('schoolName').value='Orley Farm School';
+  document.getElementById('schoolPicker').value='Orley Farm School';
   document.getElementById('feeMode').value=(defaultSchool?.feeMode)||'termly';
   renderFeeRows(deepCopy((defaultSchool?.rows && defaultSchool.rows.length)? defaultSchool.rows : ORLEY_ROWS));
   document.getElementById('loadOrley').addEventListener('click', ()=>{ document.getElementById('schoolName').value='Orley Farm School'; document.getElementById('feeMode').value='termly'; renderFeeRows(deepCopy(ORLEY_ROWS)); build(); queueAutosave(); });
@@ -898,8 +878,6 @@ function wire(){
   document.getElementById('saveSchool').addEventListener('click', async ()=>{ saveCurrentSchoolLocal(); pendingRemoteSync = true; remoteSyncAttempts = 0; await saveCurrentSchoolRemote(); build(); });
   document.getElementById('recalc').addEventListener('click', build);
   document.getElementById('downloadJson').addEventListener('click', downloadJson);
-  document.getElementById('userMenuBtn').addEventListener('click', ()=>document.getElementById('userMenuPop').classList.toggle('open'));
-  document.addEventListener('click', e=>{ const pop=document.getElementById('userMenuPop'); const btn=document.getElementById('userMenuBtn'); if(pop && btn && !pop.contains(e.target) && !btn.contains(e.target)) pop.classList.remove('open'); });
   document.getElementById('versionChip').addEventListener('click', ()=>document.getElementById('versionModal').classList.add('open'));
   document.getElementById('closeVersionModal').addEventListener('click', ()=>document.getElementById('versionModal').classList.remove('open'));
   document.getElementById('versionModal').addEventListener('click', e=>{ if(e.target.id==='versionModal') e.currentTarget.classList.remove('open'); });
@@ -908,8 +886,8 @@ function wire(){
   document.getElementById('fundSelect').addEventListener('change', build);
   document.getElementById('cashRate').addEventListener('input', build);
   ['endGroup','currentRow','remainingTerms','capitalMin','capitalMax','capitalStep','simCount'].forEach(id=>document.getElementById(id).addEventListener('input', build));
-  document.getElementById('schoolName').addEventListener('change', ()=>{ const exact = unionSchoolNames().find(n=>normalizeName(n)===normalizeName(document.getElementById('schoolName').value)); if(exact) loadSchoolByName(exact); queueAutosave(); });
-  document.getElementById('schoolName').addEventListener('input', ()=>{ rebuildSchoolPickers(); queueAutosave(); });
+  document.getElementById('schoolPicker').addEventListener('change', e=>{ if(e.target.value) loadSchoolByName(e.target.value); });
+  document.getElementById('schoolName').addEventListener('input', ()=>{ const exact = unionSchoolNames().find(n=>normalizeName(n)===normalizeName(document.getElementById('schoolName').value)); if(exact) document.getElementById('schoolPicker').value = exact; queueAutosave(); });
   document.getElementById('signInGoogle').addEventListener('click', async ()=>{
     if (authInFlight){
       debugLog('WARN', 'Sign-in ignored because another auth flow is already running.');
@@ -955,6 +933,19 @@ function wire(){
       document.getElementById('signInGoogle').disabled = false;
     }
   });
+  document.getElementById('signInGuest').addEventListener('click', async ()=>{
+    if(!AUTH?.signInAnonymously || !AUTH?.auth){
+      setAuthStatus('Guest sign-in is not ready yet. Firebase may still be loading.', 'warn');
+      return;
+    }
+    try{
+      await AUTH.signInAnonymously(AUTH.auth);
+      debugLog('INFO', 'Signed in anonymously.');
+    }catch(err){
+      debugLog('ERROR', 'Anonymous sign-in failed.', err?.message || String(err));
+      setAuthStatus(`Anonymous sign-in failed: ${err.message}`, 'warn');
+    }
+  });
   document.getElementById('signOutBtn').addEventListener('click', async ()=>{ if(AUTH?.signOut && AUTH?.auth){ await AUTH.signOut(AUTH.auth); } });
   build();
 }
@@ -991,7 +982,6 @@ async function initFirebase(){
       if (redirectResult?.user) {
         debugLog('INFO', 'Redirect sign-in result received.', redirectResult.user.uid);
         setAuthStatus(`Signed in as ${redirectResult.user.displayName || redirectResult.user.email || redirectResult.user.uid}. Firestore sync is active.`, 'ok');
-        updateUserMenuAvatar(redirectResult.user);
       }
     } catch (redirErr) {
       debugLog('ERROR', 'Redirect sign-in result failed.', redirErr?.message || String(redirErr));
@@ -1002,25 +992,15 @@ async function initFirebase(){
       if (currentUser) {
         debugLog('INFO', 'Auth state changed: signed in.', currentUser.uid);
         setAuthStatus(`Signed in as ${currentUser.displayName || currentUser.email || currentUser.uid}. Firestore sync is active.`, 'ok');
-        updateUserMenuAvatar(currentUser);
         await refreshRemoteSchools();
         pendingRemoteSync = true;
         remoteSyncAttempts = 0;
         await saveCurrentSchoolRemote();
       } else {
         debugLog('INFO', 'Auth state changed: signed out.');
-        updateUserMenuAvatar(null);
         remoteReady = false;
-        setAuthStatus('Guest mode. Local saving works; Firestore sync will use anonymous auth unless you sign in with Google.', 'warn');
+        setAuthStatus('Not signed in. Local saving works now. Sign in to sync schools to Firestore and search the shared cloud school list.', 'warn');
         setStatus('Local saving is enabled. Sign in to sync with Firestore.', 'warn');
-        if(AUTH?.signInAnonymously){
-          try{
-            await AUTH.signInAnonymously(AUTH.auth);
-            debugLog('INFO', 'Auto anonymous sign-in completed.');
-          }catch(err){
-            debugLog('ERROR', 'Auto anonymous sign-in failed.', err?.message || String(err));
-          }
-        }
       }
     });
   } catch (err) {
