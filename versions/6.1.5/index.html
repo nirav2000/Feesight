@@ -70,7 +70,7 @@ svg{width:100%;height:auto;display:block}
       <div style="flex:0 0 auto"><button id="signInGuest">Continue as guest</button></div>
       <div style="flex:0 0 auto"><button id="signOutBtn">Sign out</button></div>
     </div>
-    <details id="authDebugDetails" style="margin-top:10px;display:none">
+    <details style="margin-top:10px">
       <summary>In-app debug console</summary>
       <div id="debugConsole" class="debug-console"></div>
     </details>
@@ -237,22 +237,6 @@ function debugLog(level, message, data){
   line.className = 'line';
   line.textContent = `[${ts}] [${level}] ${message}${data ? ` | ${typeof data === 'string' ? data : JSON.stringify(data)}` : ''}`;
   if(el){ el.prepend(line); while(el.childNodes.length > 100) el.removeChild(el.lastChild); }
-  if(level === 'ERROR') revealDebugConsole();
-}
-function revealDebugConsole(){
-  const d = document.getElementById('authDebugDetails');
-  if(!d) return;
-  d.style.display = 'block';
-}
-function validateSchoolPayloadForRules(payload){
-  const issues = [];
-  if(typeof payload?.name !== 'string' || !payload.name.trim()) issues.push('name must be non-empty string');
-  if(!['termly','annual'].includes(payload?.feeMode)) issues.push('feeMode must be termly or annual');
-  if(!Array.isArray(payload?.rows)) issues.push('rows must be an array');
-  if(typeof payload?.ownerUid !== 'string' || !payload.ownerUid) issues.push('ownerUid must be a non-empty string');
-  if(typeof payload?.searchableName !== 'string' || !payload.searchableName) issues.push('searchableName must be a non-empty string');
-  if(typeof payload?.updatedAt !== 'string' || !payload.updatedAt) issues.push('updatedAt must be an ISO string');
-  return issues;
 }
 
 const FUND_LIBRARY = {
@@ -634,14 +618,6 @@ async function saveCurrentSchoolRemote(){
   try{
     const docId = `${currentUser.uid}_${docIdFromName(p.name)}`;
     const payload = {...p, ownerUid: currentUser.uid, searchableName: normalizeName(p.name), ownerEmail: currentUser.email || null};
-    const ruleShapeIssues = validateSchoolPayloadForRules(payload);
-    if(ruleShapeIssues.length){
-      setStatus(`Saved locally. Firestore sync blocked by payload shape: ${ruleShapeIssues.join('; ')}`, 'warn');
-      debugLog('ERROR', 'Payload failed local rule-shape validation.', { ruleShapeIssues, payloadPreview: { name: payload.name, feeMode: payload.feeMode, ownerUid: payload.ownerUid, rowsCount: payload.rows?.length || 0 } });
-      pendingRemoteSync = true;
-      scheduleRemoteSyncRetry(5000);
-      return false;
-    }
     await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db,'schools',docId), payload, {merge:true});
     REMOTE_SCHOOL_INDEX[p.name] = {id:docId, ownerUid:currentUser.uid};
     rebuildSchoolPickers();
@@ -651,12 +627,7 @@ async function saveCurrentSchoolRemote(){
     return true;
   }catch(err){
     setStatus(`Saved locally. Firestore sync failed: ${err.message}`, 'warn');
-    debugLog('ERROR', 'Firestore save failed.', {
-      message: err?.message || String(err),
-      code: err?.code || null,
-      uid: currentUser?.uid || null,
-      host: window.location.hostname || null
-    });
+    debugLog('ERROR', 'Firestore save failed.', err?.message || String(err));
     pendingRemoteSync = true;
     scheduleRemoteSyncRetry(err?.code === 'permission-denied' ? 7000 : 4000);
     return false;
@@ -691,11 +662,7 @@ async function refreshRemoteSchools(){
     setStatus('Local saving is enabled. Cloud school list loaded from Firestore.', 'ok');
   } catch(err){
     setStatus(`Local saving is enabled. Firestore list load failed: ${err.message}`, 'warn');
-    debugLog('ERROR', 'Firestore list load failed.', {
-      message: err?.message || String(err),
-      code: err?.code || null,
-      uid: currentUser?.uid || null
-    });
+    debugLog('ERROR', 'Firestore list load failed.', err?.message || String(err));
   }
 }
 function setStatus(msg, cls){ const el=document.getElementById('saveStatus'); el.className=`status ${cls}`; el.textContent=msg; }
