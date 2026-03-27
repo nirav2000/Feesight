@@ -50,9 +50,6 @@ svg{width:100%;height:auto;display:block}
 .user-pop.open{display:block}
 .input-panel{position:sticky;top:8px;z-index:5}
 .input-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.input-row{display:flex;gap:10px;flex-wrap:nowrap}
-.input-row > div{min-width:120px}
-.w-school{flex:2.2}.w-fee{flex:1}.w-fund{flex:1.8}.w-extend{flex:.9}.w-plan{flex:1.2}
 .panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .panel-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 @media (max-width:1100px){.g2,.g3,.split-top{grid-template-columns:1fr}}
@@ -84,12 +81,12 @@ svg{width:100%;height:auto;display:block}
 
   <div>
     <section class="card input-panel">
-      <div class="input-row">
-        <div class="w-school"><label>School</label><input id="schoolName" type="text" list="schoolSuggestions" placeholder="Type or select saved school"><datalist id="schoolSuggestions"></datalist></div>
-        <div class="w-fee"><label>Fee mode</label><select id="feeMode"><option value="annual">Annual</option><option value="termly">Termly</option></select></div>
-        <div class="w-fund"><label>Fund / cash option</label><select id="fundSelect"></select></div>
-        <div class="w-extend"><label>Extend fees to</label><select id="endGroup"><option>Y6</option><option>Y7</option><option>Y8</option></select></div>
-        <div class="w-plan"><label>Plan from row</label><select id="currentRow"></select></div>
+      <div class="input-grid">
+        <div><label>School</label><input id="schoolName" type="text" list="schoolSuggestions" placeholder="Type or select saved school"><datalist id="schoolSuggestions"></datalist></div>
+        <div><label>Fee mode</label><select id="feeMode"><option value="annual">Annual</option><option value="termly">Termly</option></select></div>
+        <div><label>Fund / cash option</label><select id="fundSelect"></select></div>
+        <div><label>Extend fees to</label><select id="endGroup"><option>Y6</option><option>Y7</option><option>Y8</option></select></div>
+        <div><label>Plan from row</label><select id="currentRow"></select></div>
       </div>
       <div class="toolbar">
         <button id="loadOrley" class="primary">Load Orley sample</button>
@@ -105,13 +102,11 @@ svg{width:100%;height:auto;display:block}
       <h2>Fund data points and sources</h2>
       <div class="row-flex"><div><label>Cash annual rate (%)</label><input id="cashRate" type="number" value="3.75" step="0.01"></div></div>
       <div id="fundMeta"></div>
-      <div class="grid g2">
-        <details open>
-          <summary>Stored return data points used by the model</summary>
-          <div class="table-wrap"><table id="fundDataTable"></table></div>
-        </details>
-        <div><canvas id="fundTrendChart" style="margin:10px 0;max-height:260px"></canvas></div>
-      </div>
+      <canvas id="fundTrendChart" style="margin:10px 0;max-height:220px"></canvas>
+      <details open>
+        <summary>Stored return data points used by the model</summary>
+        <div class="table-wrap"><table id="fundDataTable"></table></div>
+      </details>
       <p class="footer-note">Published provider performance points are stored in the app and already net of stated fund charges where the source says net of expenses / NAV total return. Cash uses your input rate.</p>
     </section>
   </div>
@@ -238,7 +233,6 @@ const MAX_REMOTE_SYNC_RETRIES = 5;
 let fundTrendChart = null;
 let autoAnonTimer = null;
 let lastGoogleSignInAt = 0;
-let autoAnonEnabled = true;
 
 function debugLog(level, message, data){
   const el = document.getElementById('debugConsole');
@@ -868,15 +862,7 @@ function build(){
   renderTermTable(exactDecum, fund);
 
   const sims = Number(document.getElementById('simCount').value||3000);
-  const curveMin = Number(document.getElementById('capitalMin').value||60000);
-  const curveMax = Number(document.getElementById('capitalMax').value||240000);
-  let curveStep = Number(document.getElementById('capitalStep').value||5000);
-  if(!Number.isFinite(curveStep) || curveStep <= 0) curveStep = 5000;
-  if(curveMax <= curveMin){
-    document.getElementById('curveWrap').innerHTML = `<div class="status warn">Curve end capital must be greater than curve start capital.</div>`;
-    return;
-  }
-  const curve = probabilityCurve(remainingRows, remainingTerms, fund, sims, curveMin, curveMax, curveStep);
+  const curve = probabilityCurve(remainingRows, remainingTerms, fund, sims, Number(document.getElementById('capitalMin').value||60000), Number(document.getElementById('capitalMax').value||240000), Number(document.getElementById('capitalStep').value||5000));
   renderCurve(curve, fund);
 
   const cap50 = curve.find(p=>p.success>=0.5)?.capital || null;
@@ -938,7 +924,6 @@ function wire(){
     }
     authInFlight = true;
     lastGoogleSignInAt = Date.now();
-    autoAnonEnabled = false;
     clearTimeout(autoAnonTimer);
     document.getElementById('signInGoogle').disabled = true;
     debugLog('INFO', 'Google sign-in button clicked.');
@@ -982,7 +967,7 @@ function wire(){
       document.getElementById('signInGoogle').disabled = false;
     }
   });
-  document.getElementById('signOutBtn').addEventListener('click', async ()=>{ autoAnonEnabled = true; if(AUTH?.signOut && AUTH?.auth){ await AUTH.signOut(AUTH.auth); } });
+  document.getElementById('signOutBtn').addEventListener('click', async ()=>{ if(AUTH?.signOut && AUTH?.auth){ await AUTH.signOut(AUTH.auth); } });
   build();
 }
 
@@ -1042,9 +1027,7 @@ async function initFirebase(){
         setAuthStatus('Guest mode. Local saving works; Firestore sync will use anonymous auth unless you sign in with Google.', 'warn');
         setStatus('', 'ok');
         const sinceGoogleClick = Date.now() - lastGoogleSignInAt;
-        if (!autoAnonEnabled) {
-          debugLog('INFO', 'Auto-anonymous sign-in disabled after explicit Google sign-in attempt.');
-        } else if (sinceGoogleClick < 12000) {
+        if (sinceGoogleClick < 12000) {
           debugLog('INFO', 'Skipping immediate anonymous sign-in after Google attempt to avoid auth race.');
         } else if(AUTH?.signInAnonymously){
           clearTimeout(autoAnonTimer);
