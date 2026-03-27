@@ -218,7 +218,6 @@ const isStandaloneLike = () => window.matchMedia('(display-mode: standalone)').m
 
 const STORAGE_KEY = 'feesight.schooldb.v2';
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_OWNER_UID = '2SLAVkYq78Pm7KR27vB1oV9ywUB3';
 let FIRESTORE = null;
 let AUTH = null;
 let firebaseReady = false;
@@ -257,14 +256,6 @@ function validateSchoolPayloadForRules(payload){
   if(typeof payload?.updatedAt !== 'string' || !payload.updatedAt) issues.push('updatedAt must be an ISO string');
   return issues;
 }
-function toRuleFeeRows(localSchool){
-  return (Array.isArray(localSchool?.rows) ? localSchool.rows : []).map(r=>({
-    academicYear: String(r?.year || '').trim(),
-    yearGroup: String(r?.group || '').trim(),
-    billingMode: localSchool?.feeMode === 'termly' ? 'termly' : 'annual',
-    amount: Number(r?.feeInput || 0)
-  })).filter(r=>r.academicYear && r.yearGroup && r.amount > 0);
-}
 function toFirestoreSchoolPayload(localSchool, user){
   const cleanRows = Array.isArray(localSchool?.rows) ? localSchool.rows.map(r=>({
     year: String(r?.year || '').trim(),
@@ -278,31 +269,6 @@ function toFirestoreSchoolPayload(localSchool, user){
     ownerUid: String(user?.uid || ''),
     searchableName: normalizeName(localSchool?.name || ''),
     updatedAt: String(localSchool?.updatedAt || new Date().toISOString())
-  };
-}
-function toCanonicalSchoolDoc(localSchool, revisionId){
-  const now = new Date().toISOString();
-  return {
-    schoolName: String(localSchool?.name || '').trim(),
-    searchableName: normalizeName(localSchool?.name || ''),
-    createdAt: now,
-    updatedAt: now,
-    status: 'active',
-    currentRevisionId: revisionId
-  };
-}
-function toRevisionDoc(schoolId, localSchool, user, revisionId, status = 'pending'){
-  return {
-    schoolId,
-    editorUid: user.uid,
-    createdAt: new Date().toISOString(),
-    action: 'update',
-    status,
-    snapshot: {
-      schoolName: String(localSchool?.name || '').trim(),
-      searchableName: normalizeName(localSchool?.name || ''),
-      fees: toRuleFeeRows(localSchool)
-    }
   };
 }
 
@@ -689,8 +655,7 @@ async function saveCurrentSchoolRemote(){
   if(!firebaseReady || !FIRESTORE || !AUTH || !currentUser) return false;
   const p = schoolPayload(); if(!p.name||!p.rows.length) return false;
   try{
-    const docId = docIdFromName(p.name);
-    const revisionId = (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2,8)}`);
+    const docId = `${currentUser.uid}_${docIdFromName(p.name)}`;
     const payload = toFirestoreSchoolPayload(p, currentUser);
     const ruleShapeIssues = validateSchoolPayloadForRules(payload);
     if(ruleShapeIssues.length){
@@ -700,19 +665,10 @@ async function saveCurrentSchoolRemote(){
       scheduleRemoteSyncRetry(5000);
       return false;
     }
-    const canonical = toCanonicalSchoolDoc(p, revisionId);
-    const revisionPublished = toRevisionDoc(docId, p, currentUser, revisionId, 'published');
-    const revisionPending = toRevisionDoc(docId, p, currentUser, revisionId, 'pending');
-    if(currentUser.uid === APP_OWNER_UID){
-      await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db,'schools',docId), canonical, {merge:true});
-      await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db,'schools',docId,'revisions',revisionId), revisionPublished, {merge:true});
-      REMOTE_SCHOOL_INDEX[p.name] = {id:docId, ownerUid:APP_OWNER_UID};
-      setStatus('Saved locally and synced to Firestore.', 'ok');
-    } else {
-      await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db,'schools',docId,'revisions',revisionId), revisionPending, {merge:true});
-      setStatus('Saved locally. Change request submitted to Firestore revisions.', 'ok');
-    }
+    await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db,'schools',docId), payload, {merge:true});
+    REMOTE_SCHOOL_INDEX[p.name] = {id:docId, ownerUid:currentUser.uid};
     rebuildSchoolPickers();
+    setStatus('Saved locally and synced to Firestore.', 'ok');
     pendingRemoteSync = false;
     remoteSyncAttempts = 0;
     clearTimeout(remoteSyncTimer);
@@ -742,6 +698,7 @@ async function refreshRemoteSchools(){
   try{
     let q = FIRESTORE.query(
       FIRESTORE.collection(FIRESTORE.db,'schools'),
+      FIRESTORE.where('ownerUid','==', currentUser.uid),
       FIRESTORE.orderBy('searchableName')
     );
     let snap;
@@ -752,7 +709,8 @@ async function refreshRemoteSchools(){
       if(!needsIndex) throw err;
       debugLog('WARN', 'Firestore query needs index; falling back to where(ownerUid) without orderBy.');
       q = FIRESTORE.query(
-        FIRESTORE.collection(FIRESTORE.db,'schools')
+        FIRESTORE.collection(FIRESTORE.db,'schools'),
+        FIRESTORE.where('ownerUid','==', currentUser.uid)
       );
       snap = await FIRESTORE.getDocs(q);
     }
@@ -760,20 +718,18 @@ async function refreshRemoteSchools(){
     const docs = [];
     snap.forEach(docSnap=>{
       const data = docSnap.data();
-      if(!data?.schoolName) return;
+      if(!data?.name) return;
       docs.push({id: docSnap.id, data});
     });
-    docs.sort((a,b)=>String(a.data.searchableName || a.data.schoolName || '').localeCompare(String(b.data.searchableName || b.data.schoolName || '')));
+    docs.sort((a,b)=>String(a.data.searchableName || a.data.name || '').localeCompare(String(b.data.searchableName || b.data.name || '')));
     docs.forEach(({id,data})=>{
-      const schoolName = data.schoolName;
-      REMOTE_SCHOOL_INDEX[schoolName] = {id, ownerUid: APP_OWNER_UID};
-      const existing = SCHOOL_DB.schools[schoolName];
-      SCHOOL_DB.schools[schoolName] = {
-        name: schoolName,
-        feeMode: existing?.feeMode || 'annual',
-        rows: Array.isArray(existing?.rows) ? existing.rows : [],
+      REMOTE_SCHOOL_INDEX[data.name] = {id, ownerUid: data.ownerUid || null};
+      SCHOOL_DB.schools[data.name] = {
+        name: data.name,
+        feeMode: data.feeMode || 'annual',
+        rows: Array.isArray(data.rows) ? data.rows : [],
         updatedAt: data.updatedAt || new Date().toISOString(),
-        source: 'cloud-shared'
+        source: data.ownerUid === currentUser.uid ? 'cloud-you' : 'cloud-shared'
       };
     });
     saveDb(SCHOOL_DB);
