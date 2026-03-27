@@ -1,4 +1,6 @@
 /* Current view intentionally mirrors legacy visual flow. */
 body[data-view="current"] .app-layout{grid-template-columns:1.05fr 1fr;align-items:start}
 body[data-view="current"] .app-main{gap:16px}
+body[data-view="current"] .app-secondary{grid-template-columns:1.05fr 1fr}
+body[data-view="current"] .insights-panel .kpi{transform:none}
 @media (max-width:1100px){body[data-view="current"] .app-layout{grid-template-columns:1fr}}

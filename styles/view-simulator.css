@@ -1,5 +1,21 @@
 /* Simulator view: control-led split with sticky controls and analysis region. */
-body[data-view="simulator"] .app-layout{grid-template-columns:minmax(320px,.9fr) minmax(0,1.2fr);align-items:start}
+body[data-view="simulator"] .app-layout{grid-template-columns:minmax(360px,1fr) minmax(0,1.6fr);align-items:start;gap:18px}
 body[data-view="simulator"] .app-sidebar{position:sticky;top:8px;align-self:start}
-body[data-view="simulator"] .app-main{display:grid;gap:16px}
-@media (max-width:1100px){body[data-view="simulator"] .app-layout{grid-template-columns:1fr}body[data-view="simulator"] .app-sidebar{position:static}}
+body[data-view="simulator"] .app-sidebar .controls-panel{border-color:#9ab0e8;box-shadow:0 8px 20px rgba(41,82,204,.12)}
+body[data-view="simulator"] .app-main{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+body[data-view="simulator"] .insights-panel{grid-column:span 12}
+body[data-view="simulator"] .app-main > .table-panel{grid-column:span 6}
+body[data-view="simulator"] .app-main > .chart-panel{grid-column:span 12}
+body[data-view="simulator"] .app-secondary{grid-column:span 12;grid-template-columns:1fr 1fr}
+body[data-view="simulator"] .insights-panel .kpis{grid-template-columns:repeat(3,minmax(160px,1fr))}
+body[data-view="simulator"] .insights-panel .kpi:nth-child(-n+3){background:#eef3ff;border-color:#9ab0e8}
+body[data-view="simulator"] .insights-panel .kpi .v{font-size:26px}
+@media (max-width:1180px){
+  body[data-view="simulator"] .app-layout{grid-template-columns:1fr}
+  body[data-view="simulator"] .app-sidebar{position:static}
+}
+@media (max-width:900px){
+  body[data-view="simulator"] .app-main > .table-panel,
+  body[data-view="simulator"] .app-secondary{grid-column:span 12;grid-template-columns:1fr}
+  body[data-view="simulator"] .insights-panel .kpis{grid-template-columns:1fr}
+}
