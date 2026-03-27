@@ -176,7 +176,7 @@ svg{width:100%;height:auto;display:block}
   <footer class="card app-footer">
     <button id="versionChip" class="link-btn">Version: loading…</button>
     <div style="flex:1 1 320px">
-      <div id="versionStatus" class="status warn"></div>
+      <div id="versionStatus" class="status warn">Loading version history…</div>
     </div>
   </footer>
 </div>
@@ -227,8 +227,6 @@ let REMOTE_SCHOOL_INDEX = {};
 let saveTimer = null;
 let VERSION_ARCHIVE = null;
 let authInFlight = false;
-let pendingRemoteSync = false;
-let remoteSyncTimer = null;
 
 function debugLog(level, message, data){
   const el = document.getElementById('debugConsole');
@@ -312,7 +310,7 @@ function getCurrentAppFile(){
 function setVersionStatus(msg, cls='ok'){
   const el = document.getElementById('versionStatus');
   el.className = `status ${cls}`;
-  el.textContent = msg || '';
+  el.textContent = msg;
 }
 function renderVersionUI(){
   if (!VERSION_ARCHIVE?.versions?.length) {
@@ -341,7 +339,7 @@ async function loadVersionArchive(){
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     VERSION_ARCHIVE = await res.json();
     renderVersionUI();
-    setVersionStatus('', 'ok');
+    setVersionStatus(`Loaded ${VERSION_ARCHIVE.versions?.length || 0} versions from ${VERSION_HISTORY_FILE}.`, 'ok');
   } catch(err){
     VERSION_ARCHIVE = null;
     renderVersionUI();
@@ -599,22 +597,11 @@ function setKpis(items){ document.getElementById('todayKpis').innerHTML = items.
 
 function schoolPayload(){ return { name: document.getElementById('schoolName').value.trim(), feeMode: document.getElementById('feeMode').value, rows: currentRows(), updatedAt: new Date().toISOString(), source:'user' }; }
 function saveCurrentSchoolLocal(){ const p=schoolPayload(); if(!p.name||!p.rows.length) return; SCHOOL_DB.schools[p.name]=p; saveDb(SCHOOL_DB); rebuildSchoolPickers(); document.getElementById('schoolPicker').value = p.name; }
-function scheduleRemoteSyncRetry(ms = 4000){
-  clearTimeout(remoteSyncTimer);
-  remoteSyncTimer = setTimeout(()=>{ if(currentUser) saveCurrentSchoolRemote(); }, ms);
-}
-function queueAutosave(){
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(async ()=>{
-    saveCurrentSchoolLocal();
-    pendingRemoteSync = true;
-    await saveCurrentSchoolRemote();
-  }, 600);
-}
+function queueAutosave(){ clearTimeout(saveTimer); saveTimer = setTimeout(async ()=>{ saveCurrentSchoolLocal(); await saveCurrentSchoolRemote(); }, 600); }
 
 async function saveCurrentSchoolRemote(){
-  if(!firebaseReady || !FIRESTORE || !AUTH || !currentUser) return false;
-  const p = schoolPayload(); if(!p.name||!p.rows.length) return false;
+  if(!firebaseReady || !FIRESTORE || !AUTH || !currentUser) return;
+  const p = schoolPayload(); if(!p.name||!p.rows.length) return;
   try{
     const docId = `${currentUser.uid}_${docIdFromName(p.name)}`;
     const payload = {...p, ownerUid: currentUser.uid, searchableName: normalizeName(p.name), ownerEmail: currentUser.email || null};
@@ -622,15 +609,9 @@ async function saveCurrentSchoolRemote(){
     REMOTE_SCHOOL_INDEX[p.name] = {id:docId, ownerUid:currentUser.uid};
     rebuildSchoolPickers();
     setStatus('Saved locally and synced to Firestore.', 'ok');
-    pendingRemoteSync = false;
-    clearTimeout(remoteSyncTimer);
-    return true;
   }catch(err){
     setStatus(`Saved locally. Firestore sync failed: ${err.message}`, 'warn');
     debugLog('ERROR', 'Firestore save failed.', err?.message || String(err));
-    pendingRemoteSync = true;
-    scheduleRemoteSyncRetry(err?.code === 'permission-denied' ? 7000 : 4000);
-    return false;
   }
 }
 
@@ -757,7 +738,6 @@ function wire(){
   document.getElementById('versionChip').addEventListener('click', ()=>document.getElementById('versionModal').classList.add('open'));
   document.getElementById('closeVersionModal').addEventListener('click', ()=>document.getElementById('versionModal').classList.remove('open'));
   document.getElementById('versionModal').addEventListener('click', e=>{ if(e.target.id==='versionModal') e.currentTarget.classList.remove('open'); });
-  setInterval(()=>{ if(currentUser && pendingRemoteSync) saveCurrentSchoolRemote(); }, 10000);
   document.getElementById('feeMode').addEventListener('change', ()=>{ renderFeeRows(currentRows()); build(); queueAutosave(); });
   document.getElementById('fundSelect').addEventListener('change', build);
   document.getElementById('cashRate').addEventListener('input', build);
@@ -869,7 +849,6 @@ async function initFirebase(){
         debugLog('INFO', 'Auth state changed: signed in.', currentUser.uid);
         setAuthStatus(`Signed in as ${currentUser.displayName || currentUser.email || currentUser.uid}. Firestore sync is active.`, 'ok');
         await refreshRemoteSchools();
-        pendingRemoteSync = true;
         await saveCurrentSchoolRemote();
       } else {
         debugLog('INFO', 'Auth state changed: signed out.');
