@@ -13,12 +13,22 @@
     },
     {
       "version": "6.1.1",
-      "label": "v6.1.1 (Current)",
-      "appFile": "index.html",
+      "label": "v6.1.1 (Archived)",
+      "appFile": "versions/6.1.1/index.html",
       "changes": [
         "Single-logo header",
         "Root canonical version archive navigation",
         "Auth unauthorized-domain guidance in debug status"
+      ]
+    },
+    {
+      "version": "6.1.2",
+      "label": "v6.1.2 (Current)",
+      "appFile": "index.html",
+      "changes": [
+        "Removed top version panel and moved history controls to footer",
+        "Header now uses logo with full-width blurb to the right",
+        "Google auth now tries popup first, with redirect fallback and guest sign-in button"
       ]
     }
   ]

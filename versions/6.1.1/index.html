@@ -16,9 +16,10 @@ body{margin:0;font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial
 .grid{display:grid;gap:16px}.g2{grid-template-columns:1.05fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 1px 3px rgba(16,24,40,.05)}
 .brand-card{padding:18px 20px}
-.brand-wrap{display:flex;gap:18px;align-items:center}
-.brand-copy{flex:1 1 auto}
-.brand-copy p{margin:0;color:var(--muted)}
+.brand-wrap{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand-lockup{display:flex;align-items:center;gap:16px;min-width:320px}
+.brand-copy h1{margin:0 0 6px;font-size:28px;line-height:1.05}
+.brand-copy p{margin:0;color:var(--muted);max-width:900px}
 .brand-mark{width:68px;height:68px;flex:0 0 68px}
 .brand-word{font-weight:800;letter-spacing:-0.02em}
 h1,h2,h3{margin:0 0 10px;line-height:1.15} p{margin:0 0 10px}.sub{color:var(--muted)}
@@ -38,7 +39,6 @@ svg{width:100%;height:auto;display:block}
 .version-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .debug-console{margin-top:12px;border:1px solid var(--line);background:#f9fbff;border-radius:10px;padding:10px;max-height:180px;overflow:auto;font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace}
 .debug-console .line{margin:0 0 6px;white-space:pre-wrap}
-.app-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px}
 @media (max-width:1100px){.g2,.g3,.split-top{grid-template-columns:1fr}}
 </style>
 
@@ -47,11 +47,23 @@ svg{width:100%;height:auto;display:block}
 <div class="wrap grid">
   <section class="card brand-card">
     <div class="brand-wrap">
-      <img class="brand-logo" src="./feesight-logo-light.svg" alt="Feesight logo">
       <div class="brand-copy">
+        <h1>Feesight</h1>
         <p class="sub">School fees analyser with drawdown, stress testing, and fund comparisons. Stored fund return points are source-backed and net of fund fees where stated.</p>
       </div>
+      <img class="brand-logo" src="./feesight-logo-light.svg" alt="Feesight logo">
     </div>
+  </section>
+
+  <section class="card">
+    <h2>Version control and archive</h2>
+    <div class="version-row">
+      <span class="pill" id="versionBadge">Version: loading…</span>
+      <select id="versionSelect" style="min-width:220px"></select>
+      <button id="refreshVersions">Refresh history</button>
+    </div>
+    <div id="versionChanges" class="panel-note"></div>
+    <div id="versionStatus" class="status warn">Loading version history…</div>
   </section>
 
   <section class="card">
@@ -61,7 +73,6 @@ svg{width:100%;height:auto;display:block}
         <div id="authStatus" class="status warn">Not signed in. Local saving works now. Sign in to sync schools to Firestore and search the shared cloud school list.</div>
       </div>
       <div style="flex:0 0 auto"><button id="signInGoogle" class="primary">Sign in with Google</button></div>
-      <div style="flex:0 0 auto"><button id="signInGuest">Continue as guest</button></div>
       <div style="flex:0 0 auto"><button id="signOutBtn">Sign out</button></div>
     </div>
     <details style="margin-top:10px">
@@ -166,18 +177,6 @@ svg{width:100%;height:auto;display:block}
     <div class="meta-line" id="termMeta"></div>
     <div class="table-wrap"><table id="termTable"></table></div>
   </section>
-
-  <footer class="card app-footer">
-    <div class="version-row">
-      <span class="pill" id="versionBadge">Version: loading…</span>
-      <select id="versionSelect" style="min-width:220px"></select>
-      <button id="refreshVersions">Refresh history</button>
-    </div>
-    <div style="flex:1 1 320px">
-      <div id="versionChanges" class="panel-note"></div>
-      <div id="versionStatus" class="status warn">Loading version history…</div>
-    </div>
-  </footer>
 </div>
 
 <script src="./firebase-config.js"></script>
@@ -214,7 +213,6 @@ let remoteReady = false;
 let REMOTE_SCHOOL_INDEX = {};
 let saveTimer = null;
 let VERSION_ARCHIVE = null;
-let authInFlight = false;
 
 function debugLog(level, message, data){
   const el = document.getElementById('debugConsole');
@@ -719,23 +717,20 @@ function wire(){
   document.getElementById('schoolPicker').addEventListener('change', e=>{ if(e.target.value) loadSchoolByName(e.target.value); });
   document.getElementById('schoolName').addEventListener('input', ()=>{ const exact = unionSchoolNames().find(n=>normalizeName(n)===normalizeName(document.getElementById('schoolName').value)); if(exact) document.getElementById('schoolPicker').value = exact; queueAutosave(); });
   document.getElementById('signInGoogle').addEventListener('click', async ()=>{
-    if (authInFlight){
-      debugLog('WARN', 'Sign-in ignored because another auth flow is already running.');
-      return;
-    }
-    authInFlight = true;
-    document.getElementById('signInGoogle').disabled = true;
     debugLog('INFO', 'Google sign-in button clicked.');
     if(!AUTH || !AUTH.auth){
       setAuthStatus('Firebase Auth is not ready yet. Check debug console for details.', 'warn');
       debugLog('WARN', 'AUTH not ready when clicking sign-in.');
-      authInFlight = false;
-      document.getElementById('signInGoogle').disabled = false;
       return;
     }
     try{
       const provider = new AUTH.GoogleAuthProvider();
-      debugLog('INFO', `Attempting popup sign-in${(isIOSLike() || isStandaloneLike()) ? ' (iOS/standalone detected)' : ''}.`);
+      if (isIOSLike() || isStandaloneLike()){
+        debugLog('INFO', 'Using redirect sign-in (iOS/standalone).');
+        await AUTH.signInWithRedirect(AUTH.auth, provider);
+        return;
+      }
+      debugLog('INFO', 'Attempting popup sign-in.');
       await AUTH.signInWithPopup(AUTH.auth, provider);
       debugLog('INFO', 'Popup sign-in returned successfully.');
     } catch(err){
@@ -746,28 +741,12 @@ function wire(){
         debugLog('WARN', 'Unauthorized domain for Firebase Auth.', { host, origin: window.location.origin });
         return;
       }
-      if(err?.code === 'auth/popup-blocked' || err?.code === 'auth/cancelled-popup-request' || err?.code === 'auth/operation-not-supported-in-this-environment'){
-        debugLog('WARN', 'Popup unavailable, retrying with redirect.');
+      if(err?.code === 'auth/popup-blocked' || err?.code === 'auth/cancelled-popup-request'){
+        debugLog('WARN', 'Popup blocked/cancelled, retrying with redirect.');
         await AUTH.signInWithRedirect(AUTH.auth, new AUTH.GoogleAuthProvider());
         return;
       }
       setAuthStatus(`Google sign-in failed: ${err.message}`, 'warn');
-    } finally {
-      authInFlight = false;
-      document.getElementById('signInGoogle').disabled = false;
-    }
-  });
-  document.getElementById('signInGuest').addEventListener('click', async ()=>{
-    if(!AUTH?.signInAnonymously || !AUTH?.auth){
-      setAuthStatus('Guest sign-in is not ready yet. Firebase may still be loading.', 'warn');
-      return;
-    }
-    try{
-      await AUTH.signInAnonymously(AUTH.auth);
-      debugLog('INFO', 'Signed in anonymously.');
-    }catch(err){
-      debugLog('ERROR', 'Anonymous sign-in failed.', err?.message || String(err));
-      setAuthStatus(`Anonymous sign-in failed: ${err.message}`, 'warn');
     }
   });
   document.getElementById('signOutBtn').addEventListener('click', async ()=>{ if(AUTH?.signOut && AUTH?.auth){ await AUTH.signOut(AUTH.auth); } });
@@ -788,7 +767,7 @@ async function initFirebase(){
   }
   try {
     debugLog('INFO', 'Loading Firebase modules…');
-    const [{ initializeApp }, { getFirestore, doc, setDoc, collection, getDocs, query, orderBy }, { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, onAuthStateChanged, signOut }] = await Promise.all([
+    const [{ initializeApp }, { getFirestore, doc, setDoc, collection, getDocs, query, orderBy }, { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut }] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js'),
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js')
@@ -798,7 +777,7 @@ async function initFirebase(){
     const db = getFirestore(app);
     const auth = getAuth(app);
     FIRESTORE = { db, doc, setDoc, collection, getDocs, query, orderBy };
-    AUTH = { auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, onAuthStateChanged, signOut };
+    AUTH = { auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut };
     firebaseReady = true;
     setStatus('Local saving is enabled. Sign in to sync with Firestore.', 'warn');
     try {
