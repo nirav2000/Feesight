@@ -23,12 +23,22 @@
     },
     {
       "version": "6.1.2",
-      "label": "v6.1.2 (Current)",
-      "appFile": "index.html",
+      "label": "v6.1.2 (Archived)",
+      "appFile": "versions/6.1.2/index.html",
       "changes": [
         "Removed top version panel and moved history controls to footer",
         "Header now uses logo with full-width blurb to the right",
-        "Google auth now tries popup first, with redirect fallback and guest sign-in button"
+        "Google auth popup-first flow with guest sign-in button"
+      ]
+    },
+    {
+      "version": "6.1.3",
+      "label": "v6.1.3 (Current)",
+      "appFile": "index.html",
+      "changes": [
+        "Prevented popup flicker on non-authorised hosts via pre-check",
+        "iOS/standalone now uses redirect first when host looks authorised",
+        "Maintained explicit unauthorized-domain guidance in status/debug"
       ]
     }
   ]

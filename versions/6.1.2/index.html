@@ -278,15 +278,6 @@ function withBust(url){
   u.searchParams.set('v', String(Date.now()));
   return u.toString();
 }
-function hostFromAuthDomain(authDomain){
-  return String(authDomain || '').replace(/^https?:\/\//,'').replace(/\/+$/,'');
-}
-function isLikelyAuthorizedDomain(){
-  const host = window.location.hostname;
-  const cfgHost = hostFromAuthDomain(window.FIREBASE_CONFIG?.authDomain);
-  const allow = new Set(['localhost','127.0.0.1', cfgHost].filter(Boolean));
-  return [...allow].some(a => host === a || host.endsWith(`.${a}`));
-}
 function getCurrentAppFile(){
   const parts = window.location.pathname.split('/').filter(Boolean);
   const fileName = parts.at(-1) || 'index.html';
@@ -742,22 +733,9 @@ function wire(){
       document.getElementById('signInGoogle').disabled = false;
       return;
     }
-    if(!isLikelyAuthorizedDomain()){
-      const host = window.location.hostname || 'file://';
-      setAuthStatus(`Google sign-in blocked before popup: ${host} is likely not in Firebase authorised domains. Add it in Firebase Console → Authentication → Settings → Authorised domains.`, 'bad');
-      debugLog('WARN', 'Blocked Google sign-in due to likely unauthorized domain.', { host, authDomain: window.FIREBASE_CONFIG?.authDomain || '' });
-      authInFlight = false;
-      document.getElementById('signInGoogle').disabled = false;
-      return;
-    }
     try{
       const provider = new AUTH.GoogleAuthProvider();
-      if (isIOSLike() || isStandaloneLike()){
-        debugLog('INFO', 'Using redirect sign-in (iOS/standalone detected).');
-        await AUTH.signInWithRedirect(AUTH.auth, provider);
-        return;
-      }
-      debugLog('INFO', 'Attempting popup sign-in.');
+      debugLog('INFO', `Attempting popup sign-in${(isIOSLike() || isStandaloneLike()) ? ' (iOS/standalone detected)' : ''}.`);
       await AUTH.signInWithPopup(AUTH.auth, provider);
       debugLog('INFO', 'Popup sign-in returned successfully.');
     } catch(err){
