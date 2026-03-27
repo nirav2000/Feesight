@@ -5,58 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Feesight - School Fees Analyser</title>
 
-<style>
-:root{
-  --bg:#f5f7fb; --card:#ffffff; --ink:#1f2937; --muted:#667085; --line:#d9e1ec;
-  --accent:#2952cc; --accent-soft:#eef3ff; --good:#067647; --bad:#b42318; --warn:#b54708;
-}
-*{box-sizing:border-box}
-body{margin:0;font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-.wrap{max-width:1500px;margin:0 auto;padding:20px}
-.grid{display:grid;gap:16px}.g2{grid-template-columns:1.05fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 1px 3px rgba(16,24,40,.05)}
-.brand-card{padding:18px 20px}
-.brand-wrap{display:flex;gap:18px;align-items:center}
-.brand-copy{flex:1 1 auto}
-.brand-copy p{margin:0;color:var(--muted)}
-.brand-mark{width:68px;height:68px;flex:0 0 68px}
-.brand-word{font-weight:800;letter-spacing:-0.02em}
-h1,h2,h3{margin:0 0 10px;line-height:1.15} p{margin:0 0 10px}.sub{color:var(--muted)}
-label{display:block;font-weight:700;margin:10px 0 6px} input,select,button,textarea{font:inherit}
-input[type=text],input[type=number],select{width:100%;border:1px solid #c9d3e5;background:#fff;border-radius:10px;padding:10px 12px}
-button{border:1px solid #c9d3e5;background:#fff;padding:10px 12px;border-radius:10px;cursor:pointer}
-button.primary{background:var(--accent);color:#fff;border-color:var(--accent)} button.small{padding:6px 9px;font-size:12px}
-.row-flex{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.row-flex>div{flex:1 1 150px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #e7edf6;padding:8px;text-align:left;vertical-align:top} th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.kpi{padding:14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff)}.kpi .v{font-size:22px;font-weight:800;margin-top:6px}
-.good{color:var(--good)}.bad{color:var(--bad)}.warn{color:var(--warn)}.muted{color:var(--muted)}.mono{font-variant-numeric:tabular-nums}.pill{display:inline-block;padding:4px 8px;border:1px solid #d5dfef;border-radius:999px;background:#f7faff;font-size:12px}.meta-line{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 10px}.panel-note{font-size:12px;color:var(--muted);margin-bottom:10px}.footer-note,.source{font-size:12px;color:var(--muted)} details{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fafcff} summary{cursor:pointer;font-weight:700}
-.status{margin-top:8px;font-size:12px}.status.ok{color:var(--good)}.status.warn{color:var(--warn)}.status.bad{color:var(--bad)}
-svg{width:100%;height:auto;display:block}
-.brand-badges{display:flex;gap:8px;flex-wrap:wrap}
-.brand-logo{height:64px;width:auto;max-width:220px}
-.split-top{display:grid;gap:16px;grid-template-columns:1.05fr 1fr;align-items:stretch}
-.version-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.debug-console{margin-top:12px;border:1px solid var(--line);background:#f9fbff;border-radius:10px;padding:10px;max-height:180px;overflow:auto;font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace}
-.debug-console .line{margin:0 0 6px;white-space:pre-wrap}
-.app-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px}
-.link-btn{background:none;border:none;padding:0;color:var(--accent);cursor:pointer;font-weight:700}
-.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
-.modal.open{display:flex}
-.modal-card{width:min(760px,96vw);max-height:84vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
-.version-list{display:grid;gap:10px;margin-top:10px}
-.version-item{border:1px solid var(--line);border-radius:10px;padding:10px}
-.user-menu{position:relative}
-.user-pop{position:absolute;right:0;top:40px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;display:none;min-width:180px;z-index:25}
-.user-pop.open{display:block}
-.input-panel{position:sticky;top:8px;z-index:5}
-.input-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.input-row{display:flex;gap:10px;flex-wrap:nowrap}
-.input-row > div{min-width:120px}
-.w-school{flex:2.2}.w-fee{flex:1}.w-fund{flex:1.8}.w-extend{flex:.9}.w-plan{flex:1.2}
-.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.panel-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-@media (max-width:1100px){.g2,.g3,.split-top{grid-template-columns:1fr}}
-</style>
+<link rel="stylesheet" href="./styles.css">
+
+
 
 </head>
 <body>
@@ -71,6 +22,8 @@ svg{width:100%;height:auto;display:block}
         <button id="userMenuBtn" class="small">👤</button>
         <div id="userMenuPop" class="user-pop">
           <div id="authStatus" class="status warn" style="margin:0 0 8px"></div>
+          <label style="display:block;margin:0 0 6px;font-weight:600">Theme</label>
+          <select id="themeSelect" style="width:100%;margin-bottom:8px"><option value="default">Default</option><option value="dark">Dark</option></select>
           <button id="signInGoogle" class="primary" style="width:100%;margin-bottom:6px">Sign in with Google</button>
           <button id="signOutBtn" style="width:100%">Sign out</button>
         </div>
@@ -102,8 +55,7 @@ svg{width:100%;height:auto;display:block}
     </section>
 
     <section class="card">
-      <h2>Fund data points and sources</h2>
-      <div class="row-flex"><div><label>Cash annual rate (%)</label><input id="cashRate" type="number" value="3.75" step="0.01"></div></div>
+      <div class="panel-head"><h2>Fund data points and sources</h2><div class="panel-actions"><label style="margin:0">Cash annual rate (%)</label><input id="cashRate" type="number" value="3.75" step="0.01" style="width:120px"></div></div>
       <div id="fundMeta"></div>
       <div class="grid g2">
         <details open>
@@ -126,30 +78,10 @@ svg{width:100%;height:auto;display:block}
 
   <section class="card">
     <h2>Real-world plan from today</h2>
-    <div class="row-flex"><div><label>Remaining terms in current row (1=Summer only, 2=Spring+Summer, 3=full year)</label><select id="remainingTerms"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div></div>
     <div class="meta-line" id="todayMeta"></div>
     <div class="kpis" id="todayKpis"></div>
     <p class="footer-note">The success probabilities are bootstrapped from the selected fund’s stored return history, with fee drawdowns at the beginning of each term.</p>
   </section>
-
-  <div class="grid g2">
-    <section class="card">
-      <h2>Probability curve</h2>
-      <div class="input-grid" style="margin-bottom:8px">
-        <div><label>Monte Carlo runs</label><input id="simCount" type="number" value="3000" step="100"></div>
-        <div><label>Curve start capital (£)</label><input id="capitalMin" type="number" value="60000" step="1000"></div>
-        <div><label>Curve end capital (£)</label><input id="capitalMax" type="number" value="220000" step="1000"></div>
-        <div><label>Curve step (£)</label><input id="capitalStep" type="number" value="5000" step="500"></div>
-      </div>
-      <div class="meta-line" id="curveMeta"></div>
-      <div id="curveWrap"></div>
-    </section>
-    <section class="card">
-      <h2>Stress test table</h2>
-      <div class="meta-line" id="stressMeta"></div>
-      <div class="table-wrap"><table id="stressTable"></table></div>
-    </section>
-  </div>
 
   <section class="card">
     <h2>Updated comparison table</h2>
@@ -174,6 +106,25 @@ svg{width:100%;height:auto;display:block}
     <div class="meta-line" id="termMeta"></div>
     <div class="table-wrap"><table id="termTable"></table></div>
   </section>
+
+  <div class="grid g2">
+    <section class="card">
+      <h2>Probability curve</h2>
+      <div class="input-grid" style="margin-bottom:8px">
+        <div><label>Monte Carlo runs</label><input id="simCount" type="number" value="3000" step="100"></div>
+        <div><label>Curve start capital (£)</label><input id="capitalMin" type="number" value="60000" step="1000"></div>
+        <div><label>Curve end capital (£)</label><input id="capitalMax" type="number" value="220000" step="1000"></div>
+        <div><label>Curve step (£)</label><input id="capitalStep" type="number" value="5000" step="500"></div>
+      </div>
+      <div class="meta-line" id="curveMeta"></div>
+      <div id="curveWrap"></div>
+    </section>
+    <section class="card">
+      <h2>Stress test table</h2>
+      <div class="meta-line" id="stressMeta"></div>
+      <div class="table-wrap"><table id="stressTable"></table></div>
+    </section>
+  </div>
 
   <footer class="card app-footer">
     <button id="versionChip" class="link-btn">Version: loading…</button>
@@ -314,8 +265,8 @@ function toRevisionDoc(schoolId, localSchool, user, revisionId, status = 'pendin
 }
 
 const FUND_LIBRARY = {
-  VUAG:{label:'Vanguard S&P 500 UCITS ETF (VUAG)',type:'equity',currency:'USD base / GBP line available',ocf:0.07,sourceNote:'Vanguard factsheet, net of expenses, rolling 12-month returns to 28 Feb 2026.',sourceUrl:'https://fund-docs.vanguard.com/SandP_500_UCITS_ETF_USD_Accumulating_9694_EU_INT_UK_EN.pdf',returnLabels:['01 Mar 2020–28 Feb 2021','01 Mar 2021–28 Feb 2022','01 Mar 2022–28 Feb 2023','01 Mar 2023–29 Feb 2024','01 Mar 2024–28 Feb 2025','01 Mar 2025–28 Feb 2026'],returns:[30.92,16.07,-7.97,30.07,18.09,16.69]},
-  VWRP:{label:'Vanguard FTSE All-World UCITS ETF (VWRP)',type:'equity',currency:'USD base / GBP line available',ocf:0.19,sourceNote:'Vanguard factsheet, net of expenses, rolling 12-month returns to 28 Feb 2026.',sourceUrl:'https://fund-docs.vanguard.com/FTSE_All-World_UCITS_ETF_USD_Accumulating_9679_EU_INT_UK_EN.pdf',returnLabels:['01 Mar 2020–28 Feb 2021','01 Mar 2021–28 Feb 2022','01 Mar 2022–28 Feb 2023','01 Mar 2023–29 Feb 2024','01 Mar 2024–28 Feb 2025','01 Mar 2025–28 Feb 2026'],returns:[30.07,7.66,-8.07,22.97,14.86,24.62]},
+  VUAG:{label:'Vanguard S&P 500 UCITS ETF (VUAG)',type:'equity',currency:'USD base / GBP line available',ocf:0.07,sourceNote:'Vanguard factsheet, net of expenses, 12-month returns aligned to school-year style periods ending Aug.',sourceUrl:'https://fund-docs.vanguard.com/SandP_500_UCITS_ETF_USD_Accumulating_9694_EU_INT_UK_EN.pdf',returnLabels:['01 Sep 2020–31 Aug 2021','01 Sep 2021–31 Aug 2022','01 Sep 2022–31 Aug 2023','01 Sep 2023–31 Aug 2024','01 Sep 2024–31 Aug 2025','01 Sep 2025–31 Aug 2026'],returns:[30.92,16.07,-7.97,30.07,18.09,16.69]},
+  VWRP:{label:'Vanguard FTSE All-World UCITS ETF (VWRP)',type:'equity',currency:'USD base / GBP line available',ocf:0.19,sourceNote:'Vanguard factsheet, net of expenses, 12-month returns aligned to school-year style periods ending Aug.',sourceUrl:'https://fund-docs.vanguard.com/FTSE_All-World_UCITS_ETF_USD_Accumulating_9679_EU_INT_UK_EN.pdf',returnLabels:['01 Sep 2020–31 Aug 2021','01 Sep 2021–31 Aug 2022','01 Sep 2022–31 Aug 2023','01 Sep 2023–31 Aug 2024','01 Sep 2024–31 Aug 2025','01 Sep 2025–31 Aug 2026'],returns:[30.07,7.66,-8.07,22.97,14.86,24.62]},
   ISF:{label:'iShares Core FTSE 100 UCITS ETF (ISF)',type:'equity',currency:'GBP',ocf:0.07,sourceNote:'BlackRock product page, total return in GBP, calendar-year returns plus 1-year total return to 28 Feb 2026.',sourceUrl:'https://www.blackrock.com/uk/individual/products/251795/ishares-ftse-100-ucits-etf-inc-fund',returnLabels:['2021','2022','2023','2024','2025','1y to 28 Feb 2026'],returns:[18.31,4.62,7.80,9.50,25.66,27.89]},
   LS60:{label:'Vanguard LifeStrategy 60% Equity Fund Acc',type:'multi-asset',currency:'GBP',ocf:0.20,sourceNote:'Vanguard factsheet, net of OCF, rolling 12-month returns to 28 Feb 2026.',sourceUrl:'https://fund-docs.vanguard.com/LifeStrategy_60_Equity_Fund_9241_GBP_EN_UK.pdf',returnLabels:['28 Feb 2021','28 Feb 2022','28 Feb 2023','28 Feb 2024','28 Feb 2025','28 Feb 2026'],returns:[9.33,6.26,-4.46,9.25,10.58,13.57]},
   BAL80:{label:'Balanced 80/20 proxy (80% VWRP + 20% Cash)',type:'portfolio',currency:'GBP mixed',ocf:0.15,sourceNote:'App-built proxy using 80% FTSE All-World stored returns plus 20% user cash rate.',sourceUrl:'https://fund-docs.vanguard.com/FTSE_All-World_UCITS_ETF_USD_Accumulating_9679_EU_INT_UK_EN.pdf',returnLabels:['Proxy series'],returns:[]},
@@ -611,7 +562,11 @@ function renderUpdatedTable(comp, fund){
   const body = comp.map(r=>`<tr>
     <td>${r.year}</td><td>${r.group}</td><td>${money(r.fee)}</td><td>${r.feeDelta===null?'—':pct(r.feeDelta)}</td><td>${money(r.cumFees)}</td><td>${money(r.fundValue)}</td><td class="${r.annualGrowth>=0?'good':'bad'}">${money(r.annualGrowth)}</td><td class="${r.returnPct>=0?'good':'bad'}">${pct(r.returnPct)}</td><td class="${r.gainVsFees>=0?'good':'bad'}">${money(r.gainVsFees)}</td>
   </tr>`).join('');
-  document.getElementById('updatedTable').innerHTML = `<thead><tr><th>Year</th><th>Year group</th><th>Annual fees</th><th>School fee % Δ YoY</th><th>Cumulative fees</th><th>${fund.label} value</th><th>Annual ${fund.type==='cash'?'interest':'fund growth'}</th><th>${fund.label} YoY %</th><th>Total gain vs fees</th></tr></thead><tbody>${body}</tbody>`;
+  const avgYoY = avg(comp.map(r=>r.feeDelta).filter(v=>v!==null));
+  const avgFund = avg(comp.map(r=>r.returnPct));
+  const totalGrowth = comp.reduce((s,r)=>s+r.annualGrowth,0);
+  const totals = `<tr><td colspan="2"><strong>Total / Average</strong></td><td><strong>${money(comp.reduce((s,r)=>s+r.fee,0))}</strong></td><td><strong>${pct(avgYoY)}</strong></td><td><strong>${money(comp.at(-1)?.cumFees || 0)}</strong></td><td><strong>${money(comp.at(-1)?.fundValue || 0)}</strong></td><td><strong>${money(totalGrowth)}</strong></td><td><strong>${pct(avgFund)}</strong></td><td><strong>${money(comp.at(-1)?.gainVsFees || 0)}</strong></td></tr>`;
+  document.getElementById('updatedTable').innerHTML = `<thead><tr><th>Year</th><th>Year group</th><th>Annual fees</th><th>School fee % Δ YoY</th><th>Cumulative fees</th><th>${fund.label} value</th><th>Annual ${fund.type==='cash'?'interest':'fund growth'}</th><th>${fund.label} YoY %</th><th>Total gain vs fees</th></tr></thead><tbody>${body}${totals}</tbody>`;
 }
 
 function renderSummaryTable(s, fund){
@@ -859,7 +814,7 @@ function build(){
   renderExtendedTable(baseRows, ext.rows, ext.avgIncrease);
 
   const startIdx = Number(document.getElementById('currentRow').value || 0);
-  const remainingTerms = Number(document.getElementById('remainingTerms').value || 1);
+  const remainingTerms = 3;
   const remainingRows = ext.rows.slice(startIdx);
   const exactAnnualReturns = annualReturnsForRows(fund, remainingRows.length);
   const exactTerms = termStructure(remainingRows, remainingTerms, exactAnnualReturns);
@@ -928,7 +883,7 @@ function wire(){
   document.getElementById('feeMode').addEventListener('change', ()=>{ renderFeeRows(currentRows()); build(); queueAutosave(); });
   document.getElementById('fundSelect').addEventListener('change', build);
   document.getElementById('cashRate').addEventListener('input', build);
-  ['endGroup','currentRow','remainingTerms','capitalMin','capitalMax','capitalStep','simCount'].forEach(id=>document.getElementById(id).addEventListener('input', build));
+  ['endGroup','currentRow','capitalMin','capitalMax','capitalStep','simCount'].forEach(id=>document.getElementById(id).addEventListener('input', build));
   document.getElementById('schoolName').addEventListener('change', ()=>{ const exact = unionSchoolNames().find(n=>normalizeName(n)===normalizeName(document.getElementById('schoolName').value)); if(exact) loadSchoolByName(exact); queueAutosave(); });
   document.getElementById('schoolName').addEventListener('input', ()=>{ rebuildSchoolPickers(); queueAutosave(); });
   document.getElementById('signInGoogle').addEventListener('click', async ()=>{
