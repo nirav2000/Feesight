@@ -85,8 +85,14 @@ svg{width:100%;height:auto;display:block}
         <div><label>School</label><input id="schoolName" type="text" list="schoolSuggestions" placeholder="Type or select saved school"><datalist id="schoolSuggestions"></datalist></div>
         <div><label>Fee mode</label><select id="feeMode"><option value="annual">Annual</option><option value="termly">Termly</option></select></div>
         <div><label>Fund / cash option</label><select id="fundSelect"></select></div>
+        <div><label>Cash annual rate (%)</label><input id="cashRate" type="number" value="3.75" step="0.01"></div>
         <div><label>Extend fees to</label><select id="endGroup"><option>Y6</option><option>Y7</option><option>Y8</option></select></div>
         <div><label>Plan from row</label><select id="currentRow"></select></div>
+        <div><label>Remaining terms in current row</label><select id="remainingTerms"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+        <div><label>Monte Carlo runs</label><input id="simCount" type="number" value="3000" step="100"></div>
+        <div><label>Curve start capital (£)</label><input id="capitalMin" type="number" value="60000" step="1000"></div>
+        <div><label>Curve end capital (£)</label><input id="capitalMax" type="number" value="220000" step="1000"></div>
+        <div><label>Curve step (£)</label><input id="capitalStep" type="number" value="5000" step="500"></div>
       </div>
       <div class="toolbar">
         <button id="loadOrley" class="primary">Load Orley sample</button>
@@ -100,7 +106,6 @@ svg{width:100%;height:auto;display:block}
 
     <section class="card">
       <h2>Fund data points and sources</h2>
-      <div class="row-flex"><div><label>Cash annual rate (%)</label><input id="cashRate" type="number" value="3.75" step="0.01"></div></div>
       <div id="fundMeta"></div>
       <canvas id="fundTrendChart" style="margin:10px 0;max-height:220px"></canvas>
       <details open>
@@ -121,7 +126,6 @@ svg{width:100%;height:auto;display:block}
 
   <section class="card">
     <h2>Real-world plan from today</h2>
-    <div class="row-flex"><div><label>Remaining terms in current row (1=Summer only, 2=Spring+Summer, 3=full year)</label><select id="remainingTerms"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div></div>
     <div class="meta-line" id="todayMeta"></div>
     <div class="kpis" id="todayKpis"></div>
     <p class="footer-note">The success probabilities are bootstrapped from the selected fund’s stored return history, with fee drawdowns at the beginning of each term.</p>
@@ -130,12 +134,6 @@ svg{width:100%;height:auto;display:block}
   <div class="grid g2">
     <section class="card">
       <h2>Probability curve</h2>
-      <div class="input-grid" style="margin-bottom:8px">
-        <div><label>Monte Carlo runs</label><input id="simCount" type="number" value="3000" step="100"></div>
-        <div><label>Curve start capital (£)</label><input id="capitalMin" type="number" value="60000" step="1000"></div>
-        <div><label>Curve end capital (£)</label><input id="capitalMax" type="number" value="220000" step="1000"></div>
-        <div><label>Curve step (£)</label><input id="capitalStep" type="number" value="5000" step="500"></div>
-      </div>
       <div class="meta-line" id="curveMeta"></div>
       <div id="curveWrap"></div>
     </section>
@@ -231,8 +229,6 @@ let remoteSyncTimer = null;
 let remoteSyncAttempts = 0;
 const MAX_REMOTE_SYNC_RETRIES = 5;
 let fundTrendChart = null;
-let autoAnonTimer = null;
-let lastGoogleSignInAt = 0;
 
 function debugLog(level, message, data){
   const el = document.getElementById('debugConsole');
@@ -923,8 +919,6 @@ function wire(){
       return;
     }
     authInFlight = true;
-    lastGoogleSignInAt = Date.now();
-    clearTimeout(autoAnonTimer);
     document.getElementById('signInGoogle').disabled = true;
     debugLog('INFO', 'Google sign-in button clicked.');
     if(!AUTH || !AUTH.auth){
@@ -952,9 +946,6 @@ function wire(){
         setAuthStatus(`Google sign-in blocked: ${host} is not an authorised domain in Firebase Auth. Add it in Firebase Console → Authentication → Settings → Authorised domains.`, 'bad');
         debugLog('WARN', 'Unauthorized domain for Firebase Auth.', { host, origin: window.location.origin });
         return;
-      }
-      if(err?.code === 'auth/popup-closed-by-user'){
-        setAuthStatus('Google sign-in was closed before completion.', 'warn');
       }
       if(err?.code === 'auth/popup-blocked' || err?.code === 'auth/cancelled-popup-request' || err?.code === 'auth/operation-not-supported-in-this-environment'){
         debugLog('WARN', 'Popup unavailable, retrying with redirect.');
@@ -1015,7 +1006,6 @@ async function initFirebase(){
         debugLog('INFO', 'Auth state changed: signed in.', currentUser.uid);
         setAuthStatus(`Signed in as ${currentUser.displayName || currentUser.email || currentUser.uid}. Firestore sync is active.`, 'ok');
         updateUserMenuAvatar(currentUser);
-        clearTimeout(autoAnonTimer);
         await refreshRemoteSchools();
         pendingRemoteSync = true;
         remoteSyncAttempts = 0;
@@ -1026,20 +1016,13 @@ async function initFirebase(){
         remoteReady = false;
         setAuthStatus('Guest mode. Local saving works; Firestore sync will use anonymous auth unless you sign in with Google.', 'warn');
         setStatus('', 'ok');
-        const sinceGoogleClick = Date.now() - lastGoogleSignInAt;
-        if (sinceGoogleClick < 12000) {
-          debugLog('INFO', 'Skipping immediate anonymous sign-in after Google attempt to avoid auth race.');
-        } else if(AUTH?.signInAnonymously){
-          clearTimeout(autoAnonTimer);
-          autoAnonTimer = setTimeout(async ()=>{
-            if(currentUser) return;
-            try{
-              await AUTH.signInAnonymously(AUTH.auth);
-              debugLog('INFO', 'Auto anonymous sign-in completed.');
-            }catch(err){
-              debugLog('ERROR', 'Auto anonymous sign-in failed.', err?.message || String(err));
-            }
-          }, 1200);
+        if(AUTH?.signInAnonymously){
+          try{
+            await AUTH.signInAnonymously(AUTH.auth);
+            debugLog('INFO', 'Auto anonymous sign-in completed.');
+          }catch(err){
+            debugLog('ERROR', 'Auto anonymous sign-in failed.', err?.message || String(err));
+          }
         }
       }
     });
