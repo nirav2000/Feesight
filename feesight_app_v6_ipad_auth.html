@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feesight - School Fees Analyser</title>
+
+<style>
+:root{
+  --bg:#f5f7fb; --card:#ffffff; --ink:#1f2937; --muted:#667085; --line:#d9e1ec;
+  --accent:#2952cc; --accent-soft:#eef3ff; --good:#067647; --bad:#b42318; --warn:#b54708;
+}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:1500px;margin:0 auto;padding:20px}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:1.05fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 1px 3px rgba(16,24,40,.05)}
+.brand-card{padding:18px 20px}
+.brand-wrap{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand-lockup{display:flex;align-items:center;gap:16px;min-width:320px}
+.brand-copy h1{margin:0 0 6px;font-size:28px;line-height:1.05}
+.brand-copy p{margin:0;color:var(--muted);max-width:900px}
+.brand-mark{width:68px;height:68px;flex:0 0 68px}
+.brand-word{font-weight:800;letter-spacing:-0.02em}
+h1,h2,h3{margin:0 0 10px;line-height:1.15} p{margin:0 0 10px}.sub{color:var(--muted)}
+label{display:block;font-weight:700;margin:10px 0 6px} input,select,button,textarea{font:inherit}
+input[type=text],input[type=number],select{width:100%;border:1px solid #c9d3e5;background:#fff;border-radius:10px;padding:10px 12px}
+button{border:1px solid #c9d3e5;background:#fff;padding:10px 12px;border-radius:10px;cursor:pointer}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)} button.small{padding:6px 9px;font-size:12px}
+.row-flex{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.row-flex>div{flex:1 1 150px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #e7edf6;padding:8px;text-align:left;vertical-align:top} th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.kpi{padding:14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff)}.kpi .v{font-size:22px;font-weight:800;margin-top:6px}
+.good{color:var(--good)}.bad{color:var(--bad)}.warn{color:var(--warn)}.muted{color:var(--muted)}.mono{font-variant-numeric:tabular-nums}.pill{display:inline-block;padding:4px 8px;border:1px solid #d5dfef;border-radius:999px;background:#f7faff;font-size:12px}.meta-line{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 10px}.panel-note{font-size:12px;color:var(--muted);margin-bottom:10px}.footer-note,.source{font-size:12px;color:var(--muted)} details{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fafcff} summary{cursor:pointer;font-weight:700}
+.status{margin-top:8px;font-size:12px}.status.ok{color:var(--good)}.status.warn{color:var(--warn)}.status.bad{color:var(--bad)}
+svg{width:100%;height:auto;display:block}
+.brand-badges{display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:1100px){.g2,.g3{grid-template-columns:1fr}}
+</style>
+
+</head>
+<body>
+<div class="wrap grid">
+  <section class="card">
+    <h1>Feesight</h1>
+    <p class="sub">School fees analyser with drawdown, stress testing, and fund comparisons. Stored fund return points are source-backed and net of fund fees where stated.</p>
+  </section>
+
+  <section class="card">
+    <h2>Account and cloud sync</h2>
+    <div class="row-flex">
+      <div style="flex:2 1 280px">
+        <div id="authStatus" class="status warn">Not signed in. Local saving works now. Sign in to sync schools to Firestore and search the shared cloud school list.</div>
+      </div>
+      <div style="flex:0 0 auto"><button id="signInGoogle" class="primary">Sign in with Google</button></div>
+      <div style="flex:0 0 auto"><button id="signOutBtn">Sign out</button></div>
+    </div>
+    <p class="sub">Cloud school records are protected with Firebase Authentication and Firestore rules. Local saving remains on even when signed out. On iPad and iPhone the app prefers redirect sign-in for better reliability. Use localhost or a hosted Firebase-authorised domain.</p>
+  </section>
+
+    <section class="card">
+      <h2>2) Fund data points and sources</h2>
+      <div id="fundMeta"></div>
+      <details open>
+        <summary>Stored return data points used by the model</summary>
+        <div class="table-wrap"><table id="fundDataTable"></table></div>
+      </details>
+      <p class="footer-note">Published provider performance points are stored in the app and already net of stated fund charges where the source says net of expenses / NAV total return. Cash uses your input rate.</p>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>3) School fee table</h2>
+    <div class="meta-line"><span class="pill" id="feeModeBadge"></span><span class="pill" id="schoolCountBadge"></span></div>
+    <div class="table-wrap"><table id="feeInputTable"><thead><tr><th>Academic Year</th><th>Year Group</th><th id="feeValueHeader">Annual Fee (£)</th><th>Annualised Fee (£)</th><th></th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="card">
+    <h2>4) Real-world plan from today</h2>
+    <div class="meta-line" id="todayMeta"></div>
+    <div class="kpis" id="todayKpis"></div>
+    <p class="footer-note">The success probabilities are bootstrapped from the selected fund’s stored return history, with fee drawdowns at the beginning of each term.</p>
+  </section>
+
+  <div class="grid g2">
+    <section class="card">
+      <h2>5) Probability curve</h2>
+      <div class="meta-line" id="curveMeta"></div>
+      <div id="curveWrap"></div>
+    </section>
+    <section class="card">
+      <h2>6) Stress test table</h2>
+      <div class="meta-line" id="stressMeta"></div>
+      <div class="table-wrap"><table id="stressTable"></table></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>7) Updated comparison table</h2>
+    <div class="meta-line" id="comparisonMeta"></div>
+    <div class="table-wrap"><table id="updatedTable"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>8) Summary table</h2>
+    <div class="meta-line" id="summaryMeta"></div>
+    <div class="table-wrap"><table id="summaryTable"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>9) Estimated extended fees</h2>
+    <div class="meta-line" id="extendedMeta"></div>
+    <div class="table-wrap"><table id="extendedTable"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>10) Term-by-term drawdown view</h2>
+    <div class="meta-line" id="termMeta"></div>
+    <div class="table-wrap"><table id="termTable"></table></div>
+  </section>
+</div>
+
+<script src="./firebase-config.js"></script>
+
+<script>
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDUXBCEll7HHYvcrn1ibfZuT-sbMUca6lg",
+  authDomain: "feesight-schoolfees.firebaseapp.com",
+  projectId: "feesight-schoolfees",
+  storageBucket: "feesight-schoolfees.firebasestorage.app",
+  messagingSenderId: "432843006828",
+  appId: "1:432843006828:web:316f0f1127fb55eace8949",
+  measurementId: "G-KWWHZG569S"
+};
+</script>
+
+<script>
+const fmt = n => new Intl.NumberFormat('en-GB',{maximumFractionDigits:0}).format(n);
+const fmt1 = n => new Intl.NumberFormat('en-GB',{minimumFractionDigits:1,maximumFractionDigits:1}).format(n);
+const money = n => `£${fmt(Math.round(n||0))}`;
+const pct = n => `${n>=0?'+':''}${fmt1(n)}%`;
+const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+const deepCopy = o => JSON.parse(JSON.stringify(o));
+const isIOSLike = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandaloneLike = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+const STORAGE_KEY = 'feesight.schooldb.v2';
+let FIRESTORE = null;
+let AUTH = null;
+let firebaseReady = false;
+let currentUser = null;
+let remoteReady = false;
+let REMOTE_SCHOOL_INDEX = {};
+let saveTimer = null;
+
+const FUND_LIBRARY = {
+  VUAG:{label:'Vanguard S&P 500 UCITS ETF (VUAG)',type:'equity',currency:'USD base / GBP line available',ocf:0.07,sourceNote:'Vanguard factsheet, net of expenses, rolling 12-month returns to 28 Feb 2026.',sourceUrl:'https://fund-docs.vanguard.com/SandP_500_UCITS_ETF_USD_Accumulating_9694_EU_INT_UK_EN.pdf',returnLabels:['01 Mar 2020–28 Feb 2021','01 Mar 2021–28 Feb 2022','01 Mar 2022–28 Feb 2023','01 Mar 2023–29 Feb 2024','01 Mar 2024–28 Feb 2025','01 Mar 2025–28 Feb 2026'],returns:[30.92,16.07,-7.97,30.07,18.09,16.69]},
+  VWRP:{label:'Vanguard FTSE All-World UCITS ETF (VWRP)',type:'equity',currency:'USD base / GBP line available',ocf:0.19,sourceNote:'Vanguard factsheet, net of expenses, rolling 12-month returns to 28 Feb 2026.',sourceUrl:'https://fund-docs.vanguard.com/FTSE_All-World_UCITS_ETF_USD_Accumulating_9679_EU_INT_UK_EN.pdf',returnLabels:['01 Mar 2020–28 Feb 2021','01 Mar 2021–28 Feb 2022','01 Mar 2022–28 Feb 2023','01 Mar 2023–29 Feb 2024','01 Mar 2024–28 Feb 2025','01 Mar 2025–28 Feb 2026'],returns:[30.07,7.66,-8.07,22.97,14.86,24.62]},
+  ISF:{label:'iShares Core FTSE 100 UCITS ETF (ISF)',type:'equity',currency:'GBP',ocf:0.07,sourceNote:'BlackRock product page, total return in GBP, calendar-year returns plus 1-year total return to 28 Feb 2026.',sourceUrl:'https://www.blackrock.com/uk/individual/products/251795/ishares-ftse-100-ucits-etf-inc-fund',returnLabels:['2021','2022','2023','2024','2025','1y to 28 Feb 2026'],returns:[18.31,4.62,7.80,9.50,25.66,27.89]},
+  LS60:{label:'Vanguard LifeStrategy 60% Equity Fund Acc',type:'multi-asset',currency:'GBP',ocf:0.20,sourceNote:'Vanguard factsheet, net of OCF, rolling 12-month returns to 28 Feb 2026.',sourceUrl:'https://fund-docs.vanguard.com/LifeStrategy_60_Equity_Fund_9241_GBP_EN_UK.pdf',returnLabels:['28 Feb 2021','28 Feb 2022','28 Feb 2023','28 Feb 2024','28 Feb 2025','28 Feb 2026'],returns:[9.33,6.26,-4.46,9.25,10.58,13.57]},
+  BAL80:{label:'Balanced 80/20 proxy (80% VWRP + 20% Cash)',type:'portfolio',currency:'GBP mixed',ocf:0.15,sourceNote:'App-built proxy using 80% FTSE All-World stored returns plus 20% user cash rate.',sourceUrl:'https://fund-docs.vanguard.com/FTSE_All-World_UCITS_ETF_USD_Accumulating_9679_EU_INT_UK_EN.pdf',returnLabels:['Proxy series'],returns:[]},
+  CASH:{label:'100% Cash',type:'cash',currency:'GBP',ocf:0.00,sourceNote:'Uses your input annual cash rate. Default is set to the Bank Rate reference.',sourceUrl:'https://www.bankofengland.co.uk/boeapps/database/Bank-Rate.asp',returnLabels:['Custom annual rate'],returns:[]}
+};
+
+const ORLEY_ROWS = [
+  {year:'2021–22', group:'Reception', feeInput:5007},
+  {year:'2022–23', group:'Y1', feeInput:5207},
+  {year:'2023–24', group:'Y2', feeInput:5572},
+  {year:'2024–25', group:'Y3', feeInput:6222},
+  {year:'2025–26', group:'Y4', feeInput:7415},
+  {year:'2026–27', group:'Y5', feeInput:8326}
+];
+
+function defaultDb(){
+  return {
+    schools:{
+      'Orley Farm School':{name:'Orley Farm School',feeMode:'termly',rows:deepCopy(ORLEY_ROWS),updatedAt:new Date().toISOString(),source:'sample'}
+    }
+  };
+}
+function loadDb(){ try{return JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultDb();}catch(e){return defaultDb();} }
+function saveDb(db){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
+let SCHOOL_DB = loadDb();
+
+function normalizeName(s){ return (s||'').trim().toLowerCase(); }
+function docIdFromName(name){ return normalizeName(name).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,120) || 'school'; }
+function setAuthStatus(msg, cls){ const el=document.getElementById('authStatus'); if(el){ el.className=`status ${cls}`; el.textContent=msg; } }
+function unionSchoolNames(){ const local = Object.keys(SCHOOL_DB.schools); const remote = Object.keys(REMOTE_SCHOOL_INDEX); return [...new Set([...local, ...remote])].sort((a,b)=>a.localeCompare(b)); }
+function annualisedFee(row){ return Number(row.feeInput||0) * (document.getElementById('feeMode').value === 'termly' ? 3 : 1); }
+function displayFeeValue(row){ return Number(row.feeInput||0); }
+function feeValueHeader(){ return document.getElementById('feeMode').value === 'termly' ? 'Termly Fee (£)' : 'Annual Fee (£)'; }
+
+function initFundSelect(){
+  const sel = document.getElementById('fundSelect');
+  sel.innerHTML = Object.entries(FUND_LIBRARY).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
+  sel.value = 'VUAG';
+}
+
+function rebuildSchoolPickers(){
+  const names = unionSchoolNames();
+  document.getElementById('schoolSuggestions').innerHTML = names.map(n=>`<option value="${n}"></option>`).join('');
+  document.getElementById('schoolPicker').innerHTML = `<option value="">Select saved school</option>` + names.map(n=>`<option value="${n}">${n}</option>`).join('');
+  document.getElementById('schoolCountBadge').textContent = `${names.length} known school${names.length===1?'':'s'}`;
+}
+
+function rowEl(row){
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="year" type="text" value="${row.year||''}"></td>
+    <td><input class="group" type="text" value="${row.group||''}"></td>
+    <td><input class="feeInput mono" type="number" value="${row.feeInput||''}" step="1"></td>
+    <td class="annualised mono"></td>
+    <td><button class="small del">Delete</button></td>`;
+  tr.querySelector('.del').addEventListener('click', ()=>{ tr.remove(); refreshCurrentRowOptions(); updateAnnualisedDisplays(); queueAutosave(); });
+  tr.querySelectorAll('input').forEach(inp=> inp.addEventListener('input', ()=>{ updateAnnualisedDisplays(); refreshCurrentRowOptions(); queueAutosave(); }));
+  return tr;
+}
+
+function renderFeeRows(rows){
+  const tbody = document.querySelector('#feeInputTable tbody');
+  tbody.innerHTML = '';
+  rows.forEach(r=>tbody.appendChild(rowEl(r)));
+  document.getElementById('feeValueHeader').textContent = feeValueHeader();
+  document.getElementById('feeModeBadge').textContent = `Input mode: ${document.getElementById('feeMode').value === 'termly' ? 'Termly fees' : 'Annual fees'}`;
+  updateAnnualisedDisplays();
+  refreshCurrentRowOptions();
+}
+
+function currentRows(){
+  return [...document.querySelectorAll('#feeInputTable tbody tr')].map(tr=>({
+    year: tr.querySelector('.year').value.trim(),
+    group: tr.querySelector('.group').value.trim(),
+    feeInput: Number(tr.querySelector('.feeInput').value||0)
+  })).filter(r=>r.year && r.group && r.feeInput>0);
+}
+
+function annualRows(){
+  return currentRows().map(r=>({year:r.year, group:r.group, fee: document.getElementById('feeMode').value === 'termly' ? r.feeInput*3 : r.feeInput }));
+}
+
+function updateAnnualisedDisplays(){
+  [...document.querySelectorAll('#feeInputTable tbody tr')].forEach(tr=>{
+    const row = {feeInput:Number(tr.querySelector('.feeInput').value||0)};
+    tr.querySelector('.annualised').textContent = row.feeInput ? money(annualisedFee(row)) : '—';
+  });
+}
+
+function refreshCurrentRowOptions(){
+  const rows = annualRows();
+  const sel = document.getElementById('currentRow');
+  const previous = sel.value;
+  sel.innerHTML = rows.map((r,i)=>`<option value="${i}" ${String(i)===String(previous)?'selected':''}>${r.year} · ${r.group}</option>`).join('');
+  if (!sel.value && rows.length) sel.value = String(Math.max(0, rows.length-2));
+}
+
+function avgFeeIncrease(rows){
+  const ch = [];
+  for(let i=1;i<rows.length;i++) ch.push(rows[i].fee/rows[i-1].fee - 1);
+  return avg(ch);
+}
+
+function extendRows(rows, endGroup){
+  const order = ['Reception','Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8'];
+  const out = deepCopy(rows);
+  const g = avgFeeIncrease(rows);
+  let prev = out[out.length-1];
+  for(let idx=order.indexOf(prev.group)+1; idx<=order.indexOf(endGroup); idx++){
+    const y0 = Number(prev.year.slice(0,4)) + 1;
+    const y1 = String(y0+1).slice(2);
+    const fee = Math.round(prev.fee * (1+g));
+    prev = {year:`${y0}–${y1}`, group:order[idx], fee, estimated:true};
+    out.push(prev);
+  }
+  return {rows:out, avgIncrease:g};
+}
+
+function getFundData(key){
+  const rate = Number(document.getElementById('cashRate').value||0);
+  if (key === 'CASH') return {...FUND_LIBRARY.CASH, returns:[rate], returnLabels:['Custom annual cash rate']};
+  if (key === 'BAL80'){
+    const all = FUND_LIBRARY.VWRP.returns.map(r=> r*0.8 + rate*0.2);
+    return {...FUND_LIBRARY.BAL80, returns:all, returnLabels:FUND_LIBRARY.VWRP.returnLabels};
+  }
+  return FUND_LIBRARY[key];
+}
+
+function annualReturnsForRows(fund, count){
+  if (fund.type === 'cash') return Array.from({length:count},()=>Number(document.getElementById('cashRate').value||0));
+  const src = fund.returns.length ? fund.returns : [0];
+  return Array.from({length:count},(_,i)=>src[i % src.length]);
+}
+
+function populateFundMeta(fund){
+  document.getElementById('fundMeta').innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="muted">Fund used</div><div class="v">${fund.label}</div></div>
+      <div class="kpi"><div class="muted">Charge used</div><div class="v">${fmt1(fund.ocf)}%</div></div>
+      <div class="kpi"><div class="muted">Average stored return</div><div class="v">${pct(avg(annualReturnsForRows(fund, Math.max(1,fund.returns.length))))}</div></div>
+    </div>
+    <p style="margin-top:10px">${fund.sourceNote}</p>
+    <p class="source">Source: <a href="${fund.sourceUrl}" target="_blank" rel="noopener">${fund.sourceUrl}</a></p>`;
+  const dataRows = (fund.returns.length?fund.returnLabels.map((label,i)=>`<tr><td>${label}</td><td>${pct(fund.returns[i])}</td></tr>`):`<tr><td>Custom annual cash rate</td><td>${pct(Number(document.getElementById('cashRate').value||0))}</td></tr>`);
+  document.getElementById('fundDataTable').innerHTML = `<thead><tr><th>Period</th><th>Return used</th></tr></thead><tbody>${Array.isArray(dataRows)?dataRows.join(''):dataRows}</tbody>`;
+}
+
+function updatedComparison(rows, fund){
+  const rets = annualReturnsForRows(fund, rows.length).map(v=>v/100);
+  let cumFees = 0, fundValue = 0;
+  return rows.map((r,i)=>{
+    cumFees += r.fee;
+    fundValue = (fundValue + r.fee) * (1 + rets[i]);
+    const prevFee = i ? rows[i-1].fee : null;
+    const feeDelta = prevFee ? (r.fee/prevFee - 1) * 100 : null;
+    const startBeforeGrowth = fundValue / (1 + rets[i]);
+    const annualGrowth = fundValue - startBeforeGrowth;
+    const gainVsFees = fundValue - cumFees;
+    return {...r, feeDelta, cumFees, fundValue, annualGrowth, returnPct:rets[i]*100, gainVsFees};
+  });
+}
+
+function summaryFromComparison(comp){
+  return {
+    totalFees: comp.at(-1)?.cumFees || 0,
+    finalFundValue: comp.at(-1)?.fundValue || 0,
+    totalGainVsFees: comp.at(-1)?.gainVsFees || 0,
+    totalAnnualGrowth: comp.reduce((s,r)=>s+r.annualGrowth,0),
+    avgSchoolFeeIncrease: avg(comp.map(r=>r.feeDelta).filter(v=>v!==null)),
+    avgFundReturn: avg(comp.map(r=>r.returnPct))
+  };
+}
+
+function renderUpdatedTable(comp, fund){
+  document.getElementById('comparisonMeta').innerHTML = `<span class="pill">Fund: ${fund.label}</span><span class="pill">Rows analysed: ${comp.length}</span>`;
+  const body = comp.map(r=>`<tr>
+    <td>${r.year}</td><td>${r.group}</td><td>${money(r.fee)}</td><td>${r.feeDelta===null?'—':pct(r.feeDelta)}</td><td>${money(r.cumFees)}</td><td>${money(r.fundValue)}</td><td class="${r.annualGrowth>=0?'good':'bad'}">${money(r.annualGrowth)}</td><td class="${r.returnPct>=0?'good':'bad'}">${pct(r.returnPct)}</td><td class="${r.gainVsFees>=0?'good':'bad'}">${money(r.gainVsFees)}</td>
+  </tr>`).join('');
+  document.getElementById('updatedTable').innerHTML = `<thead><tr><th>Year</th><th>Year group</th><th>Annual fees</th><th>School fee % Δ YoY</th><th>Cumulative fees</th><th>${fund.label} value</th><th>Annual ${fund.type==='cash'?'interest':'fund growth'}</th><th>${fund.label} YoY %</th><th>Total gain vs fees</th></tr></thead><tbody>${body}</tbody>`;
+}
+
+function renderSummaryTable(s, fund){
+  document.getElementById('summaryMeta').innerHTML = `<span class="pill">Fund: ${fund.label}</span>`;
+  const rows = [
+    ['Total fees paid', money(s.totalFees)],
+    [`Final ${fund.type==='cash'?'cash':'fund'} value`, money(s.finalFundValue)],
+    ['Total gain vs fees', money(s.totalGainVsFees)],
+    [`Total annual ${fund.type==='cash'?'interest':'growth'}`, money(s.totalAnnualGrowth)],
+    ['Average school fee increase', pct(s.avgSchoolFeeIncrease)],
+    ['Average fund return', pct(s.avgFundReturn)]
+  ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  document.getElementById('summaryTable').innerHTML = `<tbody>${rows}</tbody>`;
+}
+
+function renderExtendedTable(baseRows, extRows, avgInc){
+  document.getElementById('extendedMeta').innerHTML = `<span class="pill">Average fee increase used for extensions: ${pct(avgInc*100)}</span>`;
+  const body = extRows.map((r,i)=>`<tr><td>${r.year}</td><td>${r.group}</td><td>${money(r.fee)}</td><td>${i<baseRows.length?'Entered fee':`Estimated using average increase ${pct(avgInc*100)}`}</td></tr>`).join('');
+  document.getElementById('extendedTable').innerHTML = `<thead><tr><th>Academic year</th><th>Year group</th><th>Annual fee</th><th>Basis</th></tr></thead><tbody>${body}</tbody>`;
+}
+
+function termRate(rAnnual){ return Math.pow(1+rAnnual,1/3)-1; }
+function termStructure(rows, remainingTermsInFirst, annualReturns){
+  const terms = [];
+  rows.forEach((row,idx)=>{
+    const names = idx===0 ? (remainingTermsInFirst===1?['Summer']:remainingTermsInFirst===2?['Spring','Summer']:['Autumn','Spring','Summer']) : ['Autumn','Spring','Summer'];
+    const tr = termRate((annualReturns[idx]||0)/100);
+    names.forEach(name => terms.push({year:row.year, group:row.group, term:name, fee:row.fee/3, tr}));
+  });
+  return terms;
+}
+function runDecum(startCapital, terms){
+  let bal = startCapital;
+  return terms.map(t=>{
+    const start = bal;
+    bal -= t.fee;
+    const afterFee = bal;
+    bal *= (1+t.tr);
+    return {...t,start,afterFee,end:bal,growth:bal-afterFee};
+  });
+}
+function requiredCapitalForExactSequence(terms){
+  let bal = 0;
+  for(let i=terms.length-1;i>=0;i--) bal = (bal + terms[i].fee) / (1 + terms[i].tr);
+  return bal;
+}
+function quantile(arr,q){ const a=arr.slice().sort((x,y)=>x-y); if(!a.length) return 0; const pos=(a.length-1)*q, base=Math.floor(pos), rest=pos-base; return a[base+1]!==undefined ? a[base] + rest*(a[base+1]-a[base]) : a[base]; }
+function bootstrapSuccess(startCapital, remainingRows, remainingTermsInFirst, fund, simulations){
+  const src = annualReturnsForRows(fund, Math.max(1, fund.returns.length || 1));
+  let success = 0; const ends=[];
+  for(let s=0;s<simulations;s++){
+    const sampledAnnual = remainingRows.map(()=>src[Math.floor(Math.random()*src.length)]);
+    const terms = termStructure(remainingRows, remainingTermsInFirst, sampledAnnual);
+    const dec = runDecum(startCapital, terms);
+    const minAfter = Math.min(...dec.map(r=>r.afterFee));
+    const end = dec.at(-1)?.end || 0;
+    if(minAfter >= -1e-9 && end >= -1e-9) success++;
+    ends.push(end);
+  }
+  return {success: success/simulations, medianEnd: quantile(ends,0.5), p10End: quantile(ends,0.1), p90End: quantile(ends,0.9)};
+}
+function probabilityCurve(remainingRows, remainingTermsInFirst, fund, simulations, min,max,step){
+  const pts=[]; for(let c=min;c<=max;c+=step){ const r=bootstrapSuccess(c, remainingRows, remainingTermsInFirst, fund, simulations); pts.push({capital:c, success:r.success, medianEnd:r.medianEnd}); } return pts;
+}
+function renderCurve(points, fund){
+  document.getElementById('curveMeta').innerHTML = `<span class="pill">Fund: ${fund.label}</span><span class="pill">Curve points: ${points.length}</span>`;
+  const W=760,H=340,m={t:18,r:16,b:38,l:52}, iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const xMin=Math.min(...points.map(p=>p.capital)), xMax=Math.max(...points.map(p=>p.capital));
+  const x=v=>m.l+(v-xMin)/(xMax-xMin||1)*iw, y=v=>m.t+(1-v)*ih;
+  const path = points.map((p,i)=>`${i?'L':'M'}${x(p.capital).toFixed(1)},${y(p.success).toFixed(1)}`).join(' ');
+  let gy=''; [0,0.25,0.5,0.75,1].forEach(v=>{ gy += `<line x1="${m.l}" y1="${y(v)}" x2="${W-m.r}" y2="${y(v)}" stroke="#e7edf6"/><text x="${m.l-8}" y="${y(v)+4}" text-anchor="end" font-size="12" fill="#667085">${Math.round(v*100)}%</text>`; });
+  const xt = points.filter((_,i)=>i===0 || i===points.length-1 || i%2===0).map(p=>`<text x="${x(p.capital)}" y="${H-12}" text-anchor="middle" font-size="12" fill="#667085">${Math.round(p.capital/1000)}k</text>`).join('');
+  document.getElementById('curveWrap').innerHTML = `<svg viewBox="0 0 ${W} ${H}">${gy}<line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="#94a3b8"/><line x1="${m.l}" y1="${m.t}" x2="${m.l}" y2="${H-m.b}" stroke="#94a3b8"/><path d="${path}" fill="none" stroke="#2952cc" stroke-width="3"/>${points.map(p=>`<circle cx="${x(p.capital)}" cy="${y(p.success)}" r="3" fill="#2952cc"><title>${money(p.capital)} · ${pct(p.success*100)}</title></circle>`).join('')}${xt}<text x="${W/2}" y="${H-2}" text-anchor="middle" font-size="12" fill="#667085">Starting capital</text><text x="16" y="${H/2}" transform="rotate(-90 16 ${H/2})" text-anchor="middle" font-size="12" fill="#667085">Probability of success</text></svg>`;
+}
+function renderStressTable(rows, totalFees, fund){
+  document.getElementById('stressMeta').innerHTML = `<span class="pill">Fund: ${fund.label}</span><span class="pill">Reference fees: ${money(totalFees)}</span>`;
+  const body = rows.map(r=>`<tr><td>${r.name}</td><td>${r.returnRef}</td><td>${money(r.requiredStart)}</td><td>${fmt1((r.requiredStart/totalFees)*100)}%</td><td class="${(r.requiredStart-totalFees)<=0?'good':'bad'}">${money(r.requiredStart-totalFees)}</td><td>${money(r.endBalance)}</td><td>${r.outcome}</td></tr>`).join('');
+  document.getElementById('stressTable').innerHTML = `<thead><tr><th>Scenario</th><th>Return basis</th><th>Required start</th><th>% of fees</th><th>Diff vs fees</th><th>Fund left</th><th>Outcome</th></tr></thead><tbody>${body}</tbody>`;
+}
+function renderTermTable(rows, fund){
+  document.getElementById('termMeta').innerHTML = `<span class="pill">Fund: ${fund.label}</span><span class="pill">Drawdowns at term start</span>`;
+  const body = rows.map(r=>`<tr><td>${r.year}</td><td>${r.group}</td><td>${r.term}</td><td>${money(r.start)}</td><td>${money(r.fee)}</td><td>${money(r.afterFee)}</td><td class="${r.growth>=0?'good':'bad'}">${money(r.growth)}</td><td>${money(r.end)}</td></tr>`).join('');
+  document.getElementById('termTable').innerHTML = `<thead><tr><th>Year</th><th>Group</th><th>Term</th><th>Start</th><th>Fee draw</th><th>After fee</th><th>Term growth</th><th>End</th></tr></thead><tbody>${body}</tbody>`;
+}
+function setKpis(items){ document.getElementById('todayKpis').innerHTML = items.map(k=>`<div class="kpi"><div class="muted">${k.label}</div><div class="v ${k.className||''}">${k.value}</div></div>`).join(''); }
+
+function schoolPayload(){ return { name: document.getElementById('schoolName').value.trim(), feeMode: document.getElementById('feeMode').value, rows: currentRows(), updatedAt: new Date().toISOString(), source:'user' }; }
+function saveCurrentSchoolLocal(){ const p=schoolPayload(); if(!p.name||!p.rows.length) return; SCHOOL_DB.schools[p.name]=p; saveDb(SCHOOL_DB); rebuildSchoolPickers(); document.getElementById('schoolPicker').value = p.name; }
+function queueAutosave(){ clearTimeout(saveTimer); saveTimer = setTimeout(async ()=>{ saveCurrentSchoolLocal(); await saveCurrentSchoolRemote(); }, 600); }
+
+async function saveCurrentSchoolRemote(){
+  if(!firebaseReady || !FIRESTORE || !AUTH || !currentUser) return;
+  const p = schoolPayload(); if(!p.name||!p.rows.length) return;
+  try{
+    const docId = docIdFromName(p.name);
+    const payload = {...p, ownerUid: currentUser.uid, searchableName: normalizeName(p.name), ownerEmail: currentUser.email || null};
+    await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db,'schools',docId), payload, {merge:true});
+    REMOTE_SCHOOL_INDEX[p.name] = {id:docId, ownerUid:currentUser.uid};
+    rebuildSchoolPickers();
+    setStatus('Saved locally and synced to Firestore.', 'ok');
+  }catch(err){ setStatus(`Saved locally. Firestore sync failed: ${err.message}`, 'warn'); }
+}
+
+async function refreshRemoteSchools(){
+  if(!firebaseReady || !FIRESTORE || !AUTH || !currentUser) return;
+  try{
+    const q = FIRESTORE.query(FIRESTORE.collection(FIRESTORE.db,'schools'), FIRESTORE.orderBy('searchableName'));
+    const snap = await FIRESTORE.getDocs(q);
+    REMOTE_SCHOOL_INDEX = {};
+    snap.forEach(docSnap=>{
+      const data = docSnap.data();
+      if(!data?.name) return;
+      REMOTE_SCHOOL_INDEX[data.name] = {id: docSnap.id, ownerUid: data.ownerUid || null};
+      SCHOOL_DB.schools[data.name] = {
+        name: data.name,
+        feeMode: data.feeMode || 'annual',
+        rows: Array.isArray(data.rows) ? data.rows : [],
+        updatedAt: data.updatedAt || new Date().toISOString(),
+        source: data.ownerUid === currentUser.uid ? 'cloud-you' : 'cloud-shared'
+      };
+    });
+    saveDb(SCHOOL_DB);
+    rebuildSchoolPickers();
+    remoteReady = true;
+    setStatus('Local saving is enabled. Cloud school list loaded from Firestore.', 'ok');
+  } catch(err){
+    setStatus(`Local saving is enabled. Firestore list load failed: ${err.message}`, 'warn');
+  }
+}
+function setStatus(msg, cls){ const el=document.getElementById('saveStatus'); el.className=`status ${cls}`; el.textContent=msg; }
+
+function loadSchoolByName(name){
+  const rec = SCHOOL_DB.schools[name];
+  if(!rec) return;
+  document.getElementById('schoolName').value = rec.name;
+  document.getElementById('feeMode').value = rec.feeMode || 'annual';
+  renderFeeRows(rec.rows || []);
+  build();
+}
+
+function newSchool(){
+  document.getElementById('schoolName').value='';
+  document.getElementById('feeMode').value='annual';
+  renderFeeRows([{year:'',group:'',feeInput:''}]);
+  setStatus('New school started. Local save will happen as you type.', 'warn');
+}
+
+function downloadJson(){
+  const payload = {school: schoolPayload(), fund: getFundData(document.getElementById('fundSelect').value), generatedAt:new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='feesight-scenario.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+
+function build(){
+  const baseRows = annualRows(); if(!baseRows.length) return;
+  const fund = getFundData(document.getElementById('fundSelect').value);
+  populateFundMeta(fund);
+  const ext = extendRows(baseRows, document.getElementById('endGroup').value);
+  const comp = updatedComparison(baseRows, fund);
+  const summary = summaryFromComparison(comp);
+  renderUpdatedTable(comp, fund);
+  renderSummaryTable(summary, fund);
+  renderExtendedTable(baseRows, ext.rows, ext.avgIncrease);
+
+  const startIdx = Number(document.getElementById('currentRow').value || 0);
+  const remainingTerms = Number(document.getElementById('remainingTerms').value || 1);
+  const remainingRows = ext.rows.slice(startIdx);
+  const exactAnnualReturns = annualReturnsForRows(fund, remainingRows.length);
+  const exactTerms = termStructure(remainingRows, remainingTerms, exactAnnualReturns);
+  const exactRequired = requiredCapitalForExactSequence(exactTerms);
+  const exactDecum = runDecum(exactRequired, exactTerms);
+  renderTermTable(exactDecum, fund);
+
+  const sims = Number(document.getElementById('simCount').value||3000);
+  const curve = probabilityCurve(remainingRows, remainingTerms, fund, sims, Number(document.getElementById('capitalMin').value||60000), Number(document.getElementById('capitalMax').value||240000), Number(document.getElementById('capitalStep').value||5000));
+  renderCurve(curve, fund);
+
+  const cap50 = curve.find(p=>p.success>=0.5)?.capital || null;
+  const cap80 = curve.find(p=>p.success>=0.8)?.capital || null;
+  const cap90 = curve.find(p=>p.success>=0.9)?.capital || null;
+  const cap95 = curve.find(p=>p.success>=0.95)?.capital || null;
+  const remainingFees = exactTerms.reduce((s,t)=>s+t.fee,0);
+  document.getElementById('todayMeta').innerHTML = `<span class="pill">Fund: ${fund.label}</span><span class="pill">Average school fee increase in data: ${pct(ext.avgIncrease*100)}</span>`;
+  setKpis([
+    {label:'Remaining fees from selected point', value:money(remainingFees)},
+    {label:'Actual-sequence capital needed', value:money(exactRequired)},
+    {label:'50% success capital', value:cap50?money(cap50):'Not reached'},
+    {label:'80% success capital', value:cap80?money(cap80):'Not reached'},
+    {label:'90% success capital', value:cap90?money(cap90):'Not reached'},
+    {label:'95% success capital', value:cap95?money(cap95):'Not reached'}
+  ]);
+
+  const src = annualReturnsForRows(fund, Math.max(1, remainingRows.length));
+  const sorted = src.slice().sort((a,b)=>a-b), reversed=src.slice().sort((a,b)=>b-a), minRet=Math.min(...src), avRet=avg(src);
+  const stress = [
+    {name:'Best case actual order', seq: exactAnnualReturns, returnRef:`Actual stored order · avg ${pct(avRet)}`},
+    {name:'Strongest returns first', seq: reversed.slice(0,remainingRows.length), returnRef:'Stored returns reordered best first'},
+    {name:'Average return repeated', seq: remainingRows.map(()=>avRet), returnRef:`Flat ${pct(avRet)}`},
+    {name:'Weakest returns first', seq: sorted.slice(0,remainingRows.length), returnRef:'Stored returns reordered worst first'},
+    {name:'Severe stress', seq: remainingRows.map(()=>minRet), returnRef:`Repeat worst stored return ${pct(minRet)}`}
+  ].map(s=>{ const terms=termStructure(remainingRows, remainingTerms, s.seq); const req=requiredCapitalForExactSequence(terms); const end=runDecum(req, terms).at(-1)?.end||0; return {...s, requiredStart:req, endBalance:end, outcome:req<=remainingFees?'Capital-efficient':'Needs more than fees upfront'}; });
+  renderStressTable(stress, remainingFees, fund);
+}
+
+function wire(){
+  initFundSelect(); rebuildSchoolPickers();
+  const defaultSchool = SCHOOL_DB.schools['Orley Farm School'];
+  document.getElementById('schoolName').value='Orley Farm School';
+  document.getElementById('schoolPicker').value='Orley Farm School';
+  document.getElementById('feeMode').value=(defaultSchool?.feeMode)||'termly';
+  renderFeeRows(deepCopy((defaultSchool?.rows && defaultSchool.rows.length)? defaultSchool.rows : ORLEY_ROWS));
+  document.getElementById('loadOrley').addEventListener('click', ()=>{ document.getElementById('schoolName').value='Orley Farm School'; document.getElementById('feeMode').value='termly'; renderFeeRows(deepCopy(ORLEY_ROWS)); build(); queueAutosave(); });
+  document.getElementById('newSchool').addEventListener('click', newSchool);
+  document.getElementById('addRow').addEventListener('click', ()=>{ document.querySelector('#feeInputTable tbody').appendChild(rowEl({year:'',group:'',feeInput:''})); refreshCurrentRowOptions(); });
+  document.getElementById('saveSchool').addEventListener('click', async ()=>{ saveCurrentSchoolLocal(); await saveCurrentSchoolRemote(); build(); });
+  document.getElementById('recalc').addEventListener('click', build);
+  document.getElementById('downloadJson').addEventListener('click', downloadJson);
+  document.getElementById('feeMode').addEventListener('change', ()=>{ renderFeeRows(currentRows()); build(); queueAutosave(); });
+  document.getElementById('fundSelect').addEventListener('change', build);
+  document.getElementById('cashRate').addEventListener('input', build);
+  ['endGroup','currentRow','remainingTerms','capitalMin','capitalMax','capitalStep','simCount'].forEach(id=>document.getElementById(id).addEventListener('input', build));
+  document.getElementById('schoolPicker').addEventListener('change', e=>{ if(e.target.value) loadSchoolByName(e.target.value); });
+  document.getElementById('schoolName').addEventListener('input', ()=>{ const exact = unionSchoolNames().find(n=>normalizeName(n)===normalizeName(document.getElementById('schoolName').value)); if(exact) document.getElementById('schoolPicker').value = exact; queueAutosave(); });
+  document.getElementById('signInGoogle').addEventListener('click', async ()=>{ if(AUTH?.signInWithPopup && AUTH?.GoogleAuthProvider){ try{ await AUTH.signInWithPopup(AUTH.auth, new AUTH.GoogleAuthProvider()); } catch(err){ setAuthStatus(`Google sign-in failed: ${err.message}`, 'warn'); } } });
+  document.getElementById('signOutBtn').addEventListener('click', async ()=>{ if(AUTH?.signOut && AUTH?.auth){ await AUTH.signOut(AUTH.auth); } });
+  build();
+}
+
+wire();
+</script>
+<script type="module">
+async function initFirebase(){
+  if (!window.FIREBASE_CONFIG || !window.FIREBASE_CONFIG.projectId) return;
+  try {
+    const [{ initializeApp }, { getFirestore, doc, setDoc, collection, getDocs, query, orderBy }, { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut }] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js'),
+      import('https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js')
+    ]);
+    const app = initializeApp(window.FIREBASE_CONFIG);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    FIRESTORE = { db, doc, setDoc, collection, getDocs, query, orderBy };
+    AUTH = { auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut };
+    firebaseReady = true;
+    setStatus('Local saving is enabled. Sign in to sync with Firestore.', 'warn');
+    try { const redirectResult = await getRedirectResult(auth); if (redirectResult?.user) { setAuthStatus(`Signed in as ${redirectResult.user.displayName || redirectResult.user.email || redirectResult.user.uid}. Firestore sync is active.`, 'ok'); } } catch (redirErr) { setAuthStatus(`Google sign-in failed: ${redirErr.message}`, 'warn'); }
+    onAuthStateChanged(auth, async user => {
+      currentUser = user || null;
+      if (currentUser) {
+        setAuthStatus(`Signed in as ${currentUser.displayName || currentUser.email || currentUser.uid}. Firestore sync is active.`, 'ok');
+        await refreshRemoteSchools();
+        await saveCurrentSchoolRemote();
+      } else {
+        remoteReady = false;
+        setAuthStatus('Not signed in. Local saving works now. Sign in to sync schools to Firestore and search the shared cloud school list.', 'warn');
+        setStatus('Local saving is enabled. Sign in to sync with Firestore.', 'warn');
+    try { const redirectResult = await getRedirectResult(auth); if (redirectResult?.user) { setAuthStatus(`Signed in as ${redirectResult.user.displayName || redirectResult.user.email || redirectResult.user.uid}. Firestore sync is active.`, 'ok'); } } catch (redirErr) { setAuthStatus(`Google sign-in failed: ${redirErr.message}`, 'warn'); }
+      }
+    });
+  } catch (err) {
+    setStatus(`Local saving is enabled. Firebase could not start: ${err.message}`, 'warn');
+    setAuthStatus(`Firebase Auth could not start: ${err.message}`, 'warn');
+  }
+}
+initFirebase();
+</script>
+</body>
+</html>
