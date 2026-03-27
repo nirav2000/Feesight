@@ -256,21 +256,6 @@ function validateSchoolPayloadForRules(payload){
   if(typeof payload?.updatedAt !== 'string' || !payload.updatedAt) issues.push('updatedAt must be an ISO string');
   return issues;
 }
-function toFirestoreSchoolPayload(localSchool, user){
-  const cleanRows = Array.isArray(localSchool?.rows) ? localSchool.rows.map(r=>({
-    year: String(r?.year || '').trim(),
-    group: String(r?.group || '').trim(),
-    feeInput: Number(r?.feeInput || 0)
-  })).filter(r=>r.year && r.group && r.feeInput > 0) : [];
-  return {
-    name: String(localSchool?.name || '').trim(),
-    feeMode: localSchool?.feeMode === 'termly' ? 'termly' : 'annual',
-    rows: cleanRows,
-    ownerUid: String(user?.uid || ''),
-    searchableName: normalizeName(localSchool?.name || ''),
-    updatedAt: String(localSchool?.updatedAt || new Date().toISOString())
-  };
-}
 
 const FUND_LIBRARY = {
   VUAG:{label:'Vanguard S&P 500 UCITS ETF (VUAG)',type:'equity',currency:'USD base / GBP line available',ocf:0.07,sourceNote:'Vanguard factsheet, net of expenses, rolling 12-month returns to 28 Feb 2026.',sourceUrl:'https://fund-docs.vanguard.com/SandP_500_UCITS_ETF_USD_Accumulating_9694_EU_INT_UK_EN.pdf',returnLabels:['01 Mar 2020–28 Feb 2021','01 Mar 2021–28 Feb 2022','01 Mar 2022–28 Feb 2023','01 Mar 2023–29 Feb 2024','01 Mar 2024–28 Feb 2025','01 Mar 2025–28 Feb 2026'],returns:[30.92,16.07,-7.97,30.07,18.09,16.69]},
@@ -656,7 +641,7 @@ async function saveCurrentSchoolRemote(){
   const p = schoolPayload(); if(!p.name||!p.rows.length) return false;
   try{
     const docId = `${currentUser.uid}_${docIdFromName(p.name)}`;
-    const payload = toFirestoreSchoolPayload(p, currentUser);
+    const payload = {...p, ownerUid: currentUser.uid, searchableName: normalizeName(p.name), ownerEmail: currentUser.email || null};
     const ruleShapeIssues = validateSchoolPayloadForRules(payload);
     if(ruleShapeIssues.length){
       setStatus(`Saved locally. Firestore sync blocked by payload shape: ${ruleShapeIssues.join('; ')}`, 'warn');
@@ -674,10 +659,7 @@ async function saveCurrentSchoolRemote(){
     clearTimeout(remoteSyncTimer);
     return true;
   }catch(err){
-    const hint = err?.code === 'permission-denied'
-      ? ' Check Firestore Rules for /schools writes and ensure the deployed rule shape matches app payload keys.'
-      : '';
-    setStatus(`Saved locally. Firestore sync failed: ${err.message}.${hint}`, 'warn');
+    setStatus(`Saved locally. Firestore sync failed: ${err.message}`, 'warn');
     debugLog('ERROR', 'Firestore save failed.', {
       message: err?.message || String(err),
       code: err?.code || null,
