@@ -49,9 +49,6 @@ svg{width:100%;height:auto;display:block}
 .user-pop{position:absolute;right:0;top:40px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;display:none;min-width:180px;z-index:25}
 .user-pop.open{display:block}
 .input-panel{position:sticky;top:8px;z-index:5}
-.input-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.panel-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 @media (max-width:1100px){.g2,.g3,.split-top{grid-template-columns:1fr}}
 </style>
 
@@ -81,15 +78,21 @@ svg{width:100%;height:auto;display:block}
 
   <div>
     <section class="card input-panel">
-      <div class="input-grid">
+      <div class="row-flex">
         <div><label>School</label><input id="schoolName" type="text" list="schoolSuggestions" placeholder="Type or select saved school"><datalist id="schoolSuggestions"></datalist></div>
         <div><label>Fee mode</label><select id="feeMode"><option value="annual">Annual</option><option value="termly">Termly</option></select></div>
+      </div>
+      <div class="row-flex">
         <div><label>Fund / cash option</label><select id="fundSelect"></select></div>
         <div><label>Cash annual rate (%)</label><input id="cashRate" type="number" value="3.75" step="0.01"></div>
         <div><label>Extend fees to</label><select id="endGroup"><option>Y6</option><option>Y7</option><option>Y8</option></select></div>
+      </div>
+      <div class="row-flex">
         <div><label>Plan from row</label><select id="currentRow"></select></div>
         <div><label>Remaining terms in current row</label><select id="remainingTerms"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
         <div><label>Monte Carlo runs</label><input id="simCount" type="number" value="3000" step="100"></div>
+      </div>
+      <div class="row-flex">
         <div><label>Curve start capital (£)</label><input id="capitalMin" type="number" value="60000" step="1000"></div>
         <div><label>Curve end capital (£)</label><input id="capitalMax" type="number" value="220000" step="1000"></div>
         <div><label>Curve step (£)</label><input id="capitalStep" type="number" value="5000" step="500"></div>
@@ -101,13 +104,14 @@ svg{width:100%;height:auto;display:block}
         <button id="recalc">Recalculate</button>
         <button id="downloadJson">Download scenario JSON</button>
       </div>
-      <div id="saveStatus" class="status warn"></div>
+      <div id="saveStatus" class="status warn">Local saving is enabled. Sign in to sync with Firestore.</div>
+      <p class="panel-note">For the sample, “from today” starts from 2025-26 and assumes one term remains in that year.</p>
     </section>
 
     <section class="card">
-      <h2>Fund data points and sources</h2>
+      <h2>2) Fund data points and sources</h2>
       <div id="fundMeta"></div>
-      <canvas id="fundTrendChart" style="margin:10px 0;max-height:220px"></canvas>
+      <div id="fundTrendChart" style="margin:10px 0"></div>
       <details open>
         <summary>Stored return data points used by the model</summary>
         <div class="table-wrap"><table id="fundDataTable"></table></div>
@@ -117,15 +121,14 @@ svg{width:100%;height:auto;display:block}
   </div>
 
   <section class="card">
-    <div class="panel-head">
-      <h2>School fee table</h2>
-      <div class="panel-actions"><span class="pill" id="feeModeBadge"></span><span class="pill" id="schoolCountBadge"></span><button id="addRow">Add fee row</button></div>
-    </div>
+    <h2>3) School fee table</h2>
+    <div class="meta-line"><span class="pill" id="feeModeBadge"></span><span class="pill" id="schoolCountBadge"></span></div>
+    <div class="toolbar" style="margin-bottom:8px"><button id="addRow">Add fee row</button></div>
     <div class="table-wrap"><table id="feeInputTable"><thead><tr><th>Academic Year</th><th>Year Group</th><th id="feeValueHeader">Annual Fee (£)</th><th>Annualised Fee (£)</th><th></th></tr></thead><tbody></tbody></table></div>
   </section>
 
   <section class="card">
-    <h2>Real-world plan from today</h2>
+    <h2>4) Real-world plan from today</h2>
     <div class="meta-line" id="todayMeta"></div>
     <div class="kpis" id="todayKpis"></div>
     <p class="footer-note">The success probabilities are bootstrapped from the selected fund’s stored return history, with fee drawdowns at the beginning of each term.</p>
@@ -133,37 +136,37 @@ svg{width:100%;height:auto;display:block}
 
   <div class="grid g2">
     <section class="card">
-      <h2>Probability curve</h2>
+      <h2>5) Probability curve</h2>
       <div class="meta-line" id="curveMeta"></div>
       <div id="curveWrap"></div>
     </section>
     <section class="card">
-      <h2>Stress test table</h2>
+      <h2>6) Stress test table</h2>
       <div class="meta-line" id="stressMeta"></div>
       <div class="table-wrap"><table id="stressTable"></table></div>
     </section>
   </div>
 
   <section class="card">
-    <h2>Updated comparison table</h2>
+    <h2>7) Updated comparison table</h2>
     <div class="meta-line" id="comparisonMeta"></div>
     <div class="table-wrap"><table id="updatedTable"></table></div>
   </section>
 
   <section class="card">
-    <h2>Summary table</h2>
+    <h2>8) Summary table</h2>
     <div class="meta-line" id="summaryMeta"></div>
     <div class="table-wrap"><table id="summaryTable"></table></div>
   </section>
 
   <section class="card">
-    <h2>Estimated extended fees</h2>
+    <h2>9) Estimated extended fees</h2>
     <div class="meta-line" id="extendedMeta"></div>
     <div class="table-wrap"><table id="extendedTable"></table></div>
   </section>
 
   <section class="card">
-    <h2>Term-by-term drawdown view</h2>
+    <h2>10) Term-by-term drawdown view</h2>
     <div class="meta-line" id="termMeta"></div>
     <div class="table-wrap"><table id="termTable"></table></div>
   </section>
@@ -188,7 +191,6 @@ svg{width:100%;height:auto;display:block}
 </div>
 
 <script src="./firebase-config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
 <script>
 window.FIREBASE_CONFIG = {
@@ -228,7 +230,6 @@ let pendingRemoteSync = false;
 let remoteSyncTimer = null;
 let remoteSyncAttempts = 0;
 const MAX_REMOTE_SYNC_RETRIES = 5;
-let fundTrendChart = null;
 
 function debugLog(level, message, data){
   const el = document.getElementById('debugConsole');
@@ -559,15 +560,11 @@ function renderFundTrendChart(fund){
   const returns = fund.returns.length ? fund.returns : [Number(document.getElementById('cashRate').value||0)];
   let value = 100;
   const pts = returns.map(r=>{ value*=1+r/100; return value; });
-  const labels = returns.map((_,i)=>`Y${i+1}`);
-  const canvas = document.getElementById('fundTrendChart');
-  if(!canvas || !window.Chart) return;
-  if(fundTrendChart) fundTrendChart.destroy();
-  fundTrendChart = new Chart(canvas, {
-    type:'line',
-    data:{labels, datasets:[{label:'Indexed £100', data:pts, borderColor:'#2952cc', backgroundColor:'rgba(41,82,204,0.15)', tension:0.25, fill:true, pointRadius:2}]},
-    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, title:{display:true,text:'Indexed growth of £100 using stored annual returns'}}, scales:{x:{grid:{display:false}}, y:{grid:{color:'#e7edf6'}}}}
-  });
+  const min = Math.min(...pts), max = Math.max(...pts), W=720, H=180, p=16;
+  const x=i=>p + (i/(Math.max(1,pts.length-1))) * (W-2*p);
+  const y=v=>H-p - ((v-min)/(Math.max(1e-9,max-min))) * (H-2*p);
+  const d = pts.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  document.getElementById('fundTrendChart').innerHTML = `<svg viewBox="0 0 ${W} ${H}"><rect x="0" y="0" width="${W}" height="${H}" fill="#f8fbff"/><path d="${d}" fill="none" stroke="#2952cc" stroke-width="3"/><text x="${p}" y="${p+8}" font-size="12" fill="#667085">Indexed growth of £100 using stored annual returns</text></svg>`;
 }
 
 function updatedComparison(rows, fund){
@@ -731,10 +728,10 @@ async function saveCurrentSchoolRemote(){
       await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db,'schools',docId), canonical, {merge:true});
       await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db,'schools',docId,'revisions',revisionId), revisionPublished, {merge:true});
       REMOTE_SCHOOL_INDEX[p.name] = {id:docId, ownerUid:APP_OWNER_UID};
-      setStatus('', 'ok');
+      setStatus('Saved locally and synced to Firestore.', 'ok');
     } else {
       await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db,'schools',docId,'revisions',revisionId), revisionPending, {merge:true});
-      setStatus('', 'ok');
+      setStatus('Saved locally. Change request submitted to Firestore revisions.', 'ok');
     }
     rebuildSchoolPickers();
     pendingRemoteSync = false;
@@ -803,7 +800,7 @@ async function refreshRemoteSchools(){
     saveDb(SCHOOL_DB);
     rebuildSchoolPickers();
     remoteReady = true;
-    setStatus('', 'ok');
+    setStatus('Local saving is enabled. Cloud school list loaded from Firestore.', 'ok');
   } catch(err){
     setStatus(`Local saving is enabled. Firestore list load failed: ${err.message}`, 'warn');
     debugLog('ERROR', 'Firestore list load failed.', {
@@ -813,7 +810,7 @@ async function refreshRemoteSchools(){
     });
   }
 }
-function setStatus(msg, cls){ const el=document.getElementById('saveStatus'); if(!el) return; el.className=`status ${cls}`; el.textContent=msg || ''; }
+function setStatus(msg, cls){ const el=document.getElementById('saveStatus'); el.className=`status ${cls}`; el.textContent=msg; }
 
 function loadSchoolByName(name){
   const rec = SCHOOL_DB.schools[name];
@@ -828,7 +825,7 @@ function newSchool(){
   document.getElementById('schoolName').value='';
   document.getElementById('feeMode').value='annual';
   renderFeeRows([{year:'',group:'',feeInput:''}]);
-  setStatus('', 'ok');
+  setStatus('New school started. Local save will happen as you type.', 'warn');
 }
 
 function downloadJson(){
@@ -988,7 +985,7 @@ async function initFirebase(){
     FIRESTORE = { db, doc, setDoc, collection, getDocs, query, where, orderBy };
     AUTH = { auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, onAuthStateChanged, signOut };
     firebaseReady = true;
-    setStatus('', 'ok');
+    setStatus('Local saving is enabled. Sign in to sync with Firestore.', 'warn');
     try {
       const redirectResult = await getRedirectResult(auth);
       if (redirectResult?.user) {
@@ -1015,7 +1012,7 @@ async function initFirebase(){
         updateUserMenuAvatar(null);
         remoteReady = false;
         setAuthStatus('Guest mode. Local saving works; Firestore sync will use anonymous auth unless you sign in with Google.', 'warn');
-        setStatus('', 'ok');
+        setStatus('Local saving is enabled. Sign in to sync with Firestore.', 'warn');
         if(AUTH?.signInAnonymously){
           try{
             await AUTH.signInAnonymously(AUTH.auth);
