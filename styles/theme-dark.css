@@ -1,0 +1,12 @@
+body[data-theme="dark"]{
+  --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9ca3af; --line:#334155;
+  --accent:#60a5fa; --accent-soft:#1e293b; --good:#34d399; --bad:#f87171; --warn:#f59e0b;
+}
+body[data-theme="dark"] input[type=text],
+body[data-theme="dark"] input[type=number],
+body[data-theme="dark"] select,
+body[data-theme="dark"] button{background:#0b1220;color:var(--ink);border-color:#334155}
+body[data-theme="dark"] .pill{background:#111b2f;border-color:#334155}
+body[data-theme="dark"] details{background:#0b1220}
+body[data-theme="dark"] .debug-console{background:#0b1220}
+body[data-theme="dark"] .user-pop{background:#0b1220}

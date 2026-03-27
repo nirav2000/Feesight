@@ -1,0 +1,4 @@
+body[data-theme="default"]{
+  --bg:#f5f7fb; --card:#ffffff; --ink:#1f2937; --muted:#667085; --line:#d9e1ec;
+  --accent:#2952cc; --accent-soft:#eef3ff; --good:#067647; --bad:#b42318; --warn:#b54708;
+}

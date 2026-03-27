@@ -1,0 +1,5 @@
+/* Story view scaffold: narrative-friendly vertical sequence for future expansion. */
+body[data-view="story"] .app-layout{grid-template-columns:1fr}
+body[data-view="story"] .app-main,
+body[data-view="story"] .app-sidebar{display:grid;gap:24px}
+body[data-view="story"] .panel{scroll-margin-top:24px}

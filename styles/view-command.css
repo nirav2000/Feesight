@@ -1,0 +1,7 @@
+/* Command view: dashboard-like emphasis on insights before dense tables. */
+body[data-view="command"] .app-layout{grid-template-columns:1fr}
+body[data-view="command"] .app-main{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+body[data-view="command"] .insights-panel{grid-column:span 12}
+body[data-view="command"] .table-panel{grid-column:span 6}
+body[data-view="command"] .chart-panel{grid-column:span 12}
+@media (max-width:1200px){body[data-view="command"] .table-panel{grid-column:span 12}}
