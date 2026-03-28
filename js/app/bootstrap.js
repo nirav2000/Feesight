@@ -112,7 +112,15 @@ function rowEl(row){
   tr.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', ()=>{ updateAnnualisedDisplays(); refreshCurrentRowOptions(); queueAutosave(); }));
   return tr;
 }
-function renderFeeRows(rows){ const tbody = document.querySelector('#feeInputTable tbody'); tbody.innerHTML=''; rows.forEach(r=>tbody.appendChild(rowEl(r))); document.getElementById('feeValueHeader').textContent = document.getElementById('feeMode').value === 'termly' ? 'Termly Fee (£)' : 'Annual Fee (£)'; document.getElementById('feeModeBadge').textContent = `Input mode: ${document.getElementById('feeMode').value === 'termly' ? 'Termly fees' : 'Annual fees'}`; updateAnnualisedDisplays(); refreshCurrentRowOptions(); }
+function renderFeeRows(rows){
+  const tbody = document.querySelector('#feeInputTable tbody');
+  tbody.replaceChildren();
+  rows.forEach(r=>tbody.appendChild(rowEl(r)));
+  document.getElementById('feeValueHeader').textContent = document.getElementById('feeMode').value === 'termly' ? 'Termly Fee (£)' : 'Annual Fee (£)';
+  document.getElementById('feeModeBadge').textContent = `Input mode: ${document.getElementById('feeMode').value === 'termly' ? 'Termly fees' : 'Annual fees'}`;
+  updateAnnualisedDisplays();
+  refreshCurrentRowOptions();
+}
 function rebuildSchoolPickers(){
   const names = unionSchoolNames();
   const suggestions = document.getElementById('schoolSuggestions');
@@ -129,7 +137,7 @@ function queueAutosave(){
   saveTimer = setTimeout(async ()=>{
     saveCurrentSchoolLocal();
     pendingRemoteSync = true;
-    setStatus('Syncing pending revision…', 'warn');
+    setStatus('Syncing pending revision…', 'ok');
     await pushRemoteSchool();
   }, 600);
 }

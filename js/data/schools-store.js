@@ -48,10 +48,20 @@ export async function loadLatestRevisionRows({ firebaseReady, FIRESTORE, schoolI
   if(!firebaseReady || !FIRESTORE || !schoolId) return [];
   try{
     const revisionsRef = FIRESTORE.collection(FIRESTORE.db, 'schools', schoolId, 'revisions');
-    const q = FIRESTORE.query(revisionsRef, FIRESTORE.orderBy('createdAt', 'desc'), FIRESTORE.limit(1));
-    const snap = await FIRESTORE.getDocs(q);
-    let latest = null;
-    snap.forEach(docSnap=>{ if(!latest) latest = docSnap.data(); });
+    const queryLatest = async (status = null)=>{
+      const clauses = [];
+      if(status) clauses.push(FIRESTORE.where('status', '==', status));
+      clauses.push(FIRESTORE.orderBy('createdAt', 'desc'));
+      clauses.push(FIRESTORE.limit(1));
+      const snap = await FIRESTORE.getDocs(FIRESTORE.query(revisionsRef, ...clauses));
+      let latestDoc = null;
+      snap.forEach(docSnap=>{ if(!latestDoc) latestDoc = docSnap.data(); });
+      return latestDoc;
+    };
+
+    const latest = await queryLatest('published')
+      || await queryLatest('pending')
+      || await queryLatest();
     const fees = Array.isArray(latest?.snapshot?.fees) ? latest.snapshot.fees : [];
     return fees.map(fee=>({
       year: String(fee?.academicYear || '').trim(),

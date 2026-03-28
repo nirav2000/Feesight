@@ -12,7 +12,6 @@ export const pct = n => `${n>=0?'+':''}${fmt1(n)}%`;
 
 let fundTrendChart = null;
 
-const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const sanitizeExternalUrl = rawUrl => {
   if(!rawUrl) return '';
   try{
@@ -123,14 +122,60 @@ export function renderExtendedTable(baseRows, extRows, avgInc){
 }
 
 export function renderCurve(points, fund){
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const createSvg = (tag, attrs = {})=>{
+    const el = document.createElementNS(SVG_NS, tag);
+    Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k, String(v)));
+    return el;
+  };
   const W=760,H=340,m={t:18,r:16,b:38,l:52}, iw=W-m.l-m.r, ih=H-m.t-m.b;
   const xMin=Math.min(...points.map(p=>p.capital)), xMax=Math.max(...points.map(p=>p.capital));
   const x=v=>m.l+(v-xMin)/(xMax-xMin||1)*iw, y=v=>m.t+(1-v)*ih;
   const path = points.map((p,i)=>`${i?'L':'M'}${x(p.capital).toFixed(1)},${y(p.success).toFixed(1)}`).join(' ');
-  let gy=''; [0,0.25,0.5,0.75,1].forEach(v=>{ gy += `<line x1="${m.l}" y1="${y(v)}" x2="${W-m.r}" y2="${y(v)}" stroke="#e7edf6"/><text x="${m.l-8}" y="${y(v)+4}" text-anchor="end" font-size="12" fill="#667085">${Math.round(v*100)}%</text>`; });
-  const xt = points.filter((_,i)=>i===0 || i===points.length-1 || i%2===0).map(p=>`<text x="${x(p.capital)}" y="${H-12}" text-anchor="middle" font-size="12" fill="#667085">${Math.round(p.capital/1000)}k</text>`).join('');
-  document.getElementById('curveMeta').innerHTML = `<span class="pill">Fund: ${escapeHtml(fund.label)}</span><span class="pill">Curve points: ${points.length}</span>`;
-  document.getElementById('curveWrap').innerHTML = `<svg viewBox="0 0 ${W} ${H}">${gy}<line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="#94a3b8"/><line x1="${m.l}" y1="${m.t}" x2="${m.l}" y2="${H-m.b}" stroke="#94a3b8"/><path d="${path}" fill="none" stroke="#2952cc" stroke-width="3"/>${points.map(p=>`<circle cx="${x(p.capital)}" cy="${y(p.success)}" r="3" fill="#2952cc"><title>${money(p.capital)} · ${pct(p.success*100)}</title></circle>`).join('')}${xt}<text x="${W/2}" y="${H-2}" text-anchor="middle" font-size="12" fill="#667085">Starting capital</text><text x="16" y="${H/2}" transform="rotate(-90 16 ${H/2})" text-anchor="middle" font-size="12" fill="#667085">Probability of success</text></svg>`;
+
+  const curveMeta = document.getElementById('curveMeta');
+  curveMeta.replaceChildren();
+  [{label:'Fund', value:fund.label}, {label:'Curve points', value:String(points.length)}].forEach(item=>{
+    const pill = document.createElement('span');
+    pill.className = 'pill';
+    pill.textContent = `${item.label}: ${item.value}`;
+    curveMeta.appendChild(pill);
+  });
+
+  const svg = createSvg('svg', { viewBox:`0 0 ${W} ${H}` });
+  [0,0.25,0.5,0.75,1].forEach(v=>{
+    svg.appendChild(createSvg('line', { x1:m.l, y1:y(v), x2:W-m.r, y2:y(v), stroke:'#e7edf6' }));
+    const text = createSvg('text', { x:m.l-8, y:y(v)+4, 'text-anchor':'end', 'font-size':12, fill:'#667085' });
+    text.textContent = `${Math.round(v*100)}%`;
+    svg.appendChild(text);
+  });
+  svg.appendChild(createSvg('line', { x1:m.l, y1:H-m.b, x2:W-m.r, y2:H-m.b, stroke:'#94a3b8' }));
+  svg.appendChild(createSvg('line', { x1:m.l, y1:m.t, x2:m.l, y2:H-m.b, stroke:'#94a3b8' }));
+  svg.appendChild(createSvg('path', { d:path, fill:'none', stroke:'#2952cc', 'stroke-width':3 }));
+
+  points.forEach(p=>{
+    const circle = createSvg('circle', { cx:x(p.capital), cy:y(p.success), r:3, fill:'#2952cc' });
+    const title = createSvg('title');
+    title.textContent = `${money(p.capital)} · ${pct(p.success*100)}`;
+    circle.appendChild(title);
+    svg.appendChild(circle);
+  });
+
+  points.filter((_,i)=>i===0 || i===points.length-1 || i%2===0).forEach(p=>{
+    const text = createSvg('text', { x:x(p.capital), y:H-12, 'text-anchor':'middle', 'font-size':12, fill:'#667085' });
+    text.textContent = `${Math.round(p.capital/1000)}k`;
+    svg.appendChild(text);
+  });
+
+  const xAxisLabel = createSvg('text', { x:W/2, y:H-2, 'text-anchor':'middle', 'font-size':12, fill:'#667085' });
+  xAxisLabel.textContent = 'Starting capital';
+  svg.appendChild(xAxisLabel);
+  const yAxisLabel = createSvg('text', { x:16, y:H/2, transform:`rotate(-90 16 ${H/2})`, 'text-anchor':'middle', 'font-size':12, fill:'#667085' });
+  yAxisLabel.textContent = 'Probability of success';
+  svg.appendChild(yAxisLabel);
+
+  const curveWrap = document.getElementById('curveWrap');
+  curveWrap.replaceChildren(svg);
 }
 
 export function renderStressTable(rows, totalFees, fund){
