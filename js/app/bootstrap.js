@@ -30,17 +30,63 @@ const getRootUrl = ()=> new URL(getRootPathPrefix() || '.', window.location.href
 const withBust = url => { const u = new URL(url, window.location.href); u.searchParams.set('v', String(Date.now())); return u.toString(); };
 function getCurrentAppFile(){ const parts = window.location.pathname.split('/').filter(Boolean); const fileName = parts.at(-1) || 'index.html'; const versionsIdx = parts.indexOf('versions'); if (versionsIdx >= 0 && parts[versionsIdx + 1]) return `versions/${parts[versionsIdx + 1]}/${fileName}`; return fileName; }
 async function loadVersionArchive(){ try{ const res = await fetch(withBust(`${getRootUrl()}${VERSION_HISTORY_FILE}`), { cache: 'no-store' }); const archive = await res.json(); const currentFile = getCurrentAppFile(); const currentEntry = archive.versions.find(v=>v.appFile===currentFile) || archive.versions.at(-1); document.getElementById('versionChip').textContent = `Version: ${currentEntry?.version || 'unknown'}`; document.getElementById('versionList').innerHTML = archive.versions.map(entry=>`<div class="version-item"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><strong>${entry.label || entry.version}</strong><button class="open-version" data-version="${entry.version}">Open</button></div><div class="panel-note">${(entry.changes||[]).join(' • ') || 'No change notes.'}</div></div>`).join(''); document.querySelectorAll('.open-version').forEach(btn=>btn.addEventListener('click', ()=>{ const entry = archive.versions.find(v=>v.version===btn.dataset.version); if(entry && entry.appFile !== currentFile) window.location.href = withBust(`${getRootUrl()}${entry.appFile}`); })); }catch(err){ document.getElementById('versionStatus').textContent = `Version history could not be loaded: ${err.message}`; }}
+function sanitizeExternalUrl(rawUrl){ if(!rawUrl) return ''; try{ const parsed = new URL(rawUrl, window.location.href); if(parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed.href; }catch(_err){ return ''; } return ''; }
+function updateUserMenuAvatar(user){
+  const btn = document.getElementById('userMenuBtn');
+  if(!btn) return;
+  if(user?.photoURL){
+    const safePhotoUrl = sanitizeExternalUrl(user.photoURL);
+    // Trust boundary: profile photo URL comes from remote auth profile data.
+    if(safePhotoUrl){
+      const img = document.createElement('img');
+      img.src = safePhotoUrl;
+      img.alt = 'user';
+      img.style.cssText = 'width:22px;height:22px;border-radius:50%;vertical-align:middle';
+      btn.replaceChildren(img);
+      return;
+    }
+  }
+  if(user){
+    const label = (user.displayName || user.email || 'U').trim().charAt(0).toUpperCase();
+    btn.textContent = label || 'U';
+  } else btn.textContent = '👤';
+}
 
 const unionSchoolNames = ()=> [...new Set([...Object.keys(SCHOOL_DB.schools), ...Object.keys(REMOTE_SCHOOL_INDEX)])].sort((a,b)=>a.localeCompare(b));
 const currentRows = ()=> [...document.querySelectorAll('#feeInputTable tbody tr')].map(tr=>({ year: tr.querySelector('.year').value.trim(), group: tr.querySelector('.group').value.trim(), feeInput: Number(tr.querySelector('.feeInput').value||0) })).filter(r=>r.year && r.group && r.feeInput>0);
 const annualRows = ()=> currentRows().map(r=>({year:r.year, group:r.group, fee: document.getElementById('feeMode').value === 'termly' ? r.feeInput*3 : r.feeInput }));
 const schoolPayload = ()=> ({ name: document.getElementById('schoolName').value.trim(), feeMode: document.getElementById('feeMode').value, rows: currentRows(), updatedAt: new Date().toISOString(), source:'user' });
 
-function refreshCurrentRowOptions(){ const rows = annualRows(); const sel = document.getElementById('currentRow'); const previous = sel.value; sel.innerHTML = rows.map((r,i)=>`<option value="${i}" ${String(i)===String(previous)?'selected':''}>${r.year} · ${r.group}</option>`).join(''); if (!sel.value && rows.length) sel.value = String(Math.max(0, rows.length-2)); }
+function refreshCurrentRowOptions(){
+  const rows = annualRows(); const sel = document.getElementById('currentRow'); const previous = sel.value;
+  sel.replaceChildren();
+  rows.forEach((r,i)=>{ const option = document.createElement('option'); option.value = String(i); // Trust boundary: row fields are user input.
+    option.textContent = `${r.year} · ${r.group}`; if(String(i)===String(previous)) option.selected = true; sel.appendChild(option); });
+  if (!sel.value && rows.length) sel.value = String(Math.max(0, rows.length-2));
+}
 function updateAnnualisedDisplays(){ [...document.querySelectorAll('#feeInputTable tbody tr')].forEach(tr=>{ const input=Number(tr.querySelector('.feeInput').value||0); tr.querySelector('.annualised').textContent = input ? money(input * (document.getElementById('feeMode').value === 'termly' ? 3 : 1)) : '—'; }); }
-function rowEl(row){ const tr = document.createElement('tr'); tr.innerHTML = `<td><input class="year" type="text" value="${row.year||''}"></td><td><input class="group" type="text" value="${row.group||''}"></td><td><input class="feeInput mono" type="number" value="${row.feeInput||''}" step="1"></td><td class="annualised mono"></td><td><button class="small del">Delete</button></td>`; tr.querySelector('.del').addEventListener('click', ()=>{ tr.remove(); refreshCurrentRowOptions(); updateAnnualisedDisplays(); queueAutosave(); }); tr.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', ()=>{ updateAnnualisedDisplays(); refreshCurrentRowOptions(); queueAutosave(); })); return tr; }
+function rowEl(row){
+  const tr = document.createElement('tr');
+  const yearTd = document.createElement('td'); const yearInput = document.createElement('input'); yearInput.className='year'; yearInput.type='text'; yearInput.value=row.year||''; yearTd.appendChild(yearInput);
+  const groupTd = document.createElement('td'); const groupInput = document.createElement('input'); groupInput.className='group'; groupInput.type='text'; groupInput.value=row.group||''; groupTd.appendChild(groupInput);
+  const feeTd = document.createElement('td'); const feeInput = document.createElement('input'); feeInput.className='feeInput mono'; feeInput.type='number'; feeInput.step='1'; feeInput.value=row.feeInput||''; feeTd.appendChild(feeInput);
+  const annualisedTd = document.createElement('td'); annualisedTd.className='annualised mono';
+  const actionTd = document.createElement('td'); const delBtn = document.createElement('button'); delBtn.className='small del'; delBtn.type='button'; delBtn.textContent='Delete'; actionTd.appendChild(delBtn);
+  tr.append(yearTd, groupTd, feeTd, annualisedTd, actionTd);
+  tr.querySelector('.del').addEventListener('click', ()=>{ tr.remove(); refreshCurrentRowOptions(); updateAnnualisedDisplays(); queueAutosave(); });
+  tr.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', ()=>{ updateAnnualisedDisplays(); refreshCurrentRowOptions(); queueAutosave(); }));
+  return tr;
+}
 function renderFeeRows(rows){ const tbody = document.querySelector('#feeInputTable tbody'); tbody.innerHTML=''; rows.forEach(r=>tbody.appendChild(rowEl(r))); document.getElementById('feeValueHeader').textContent = document.getElementById('feeMode').value === 'termly' ? 'Termly Fee (£)' : 'Annual Fee (£)'; document.getElementById('feeModeBadge').textContent = `Input mode: ${document.getElementById('feeMode').value === 'termly' ? 'Termly fees' : 'Annual fees'}`; updateAnnualisedDisplays(); refreshCurrentRowOptions(); }
-function rebuildSchoolPickers(){ const names = unionSchoolNames(); document.getElementById('schoolSuggestions').innerHTML = names.map(n=>`<option value="${n}"></option>`).join(''); const currentName = document.getElementById('schoolName')?.value?.trim() || names[0] || 'No school selected'; document.getElementById('schoolCountBadge').textContent = `🏫 ${currentName}`; }
+function rebuildSchoolPickers(){
+  const names = unionSchoolNames();
+  const suggestions = document.getElementById('schoolSuggestions');
+  suggestions.replaceChildren();
+  names.forEach(name=>{ const option = document.createElement('option'); // Trust boundary: names combine local and remote values.
+    option.value = name; suggestions.appendChild(option); });
+  const currentName = document.getElementById('schoolName')?.value?.trim() || names[0] || 'No school selected';
+  document.getElementById('schoolCountBadge').textContent = `🏫 ${currentName}`;
+}
 function saveCurrentSchoolLocal(){ const p=schoolPayload(); if(!p.name||!p.rows.length) return; SCHOOL_DB.schools[p.name]=p; saveDb(SCHOOL_DB); rebuildSchoolPickers(); }
 async function pushRemoteSchool(){ const ok = await saveCurrentSchoolRemote({ firebaseReady, FIRESTORE, currentUser, school: schoolPayload(), onWarn:(m)=>setStatus(m,'warn'), onStatus:setStatus, dbState:SCHOOL_DB, onRemoteIndex:(name,meta)=>{REMOTE_SCHOOL_INDEX[name]=meta;} }); pendingRemoteSync = !ok; return ok; }
 function queueAutosave(){ clearTimeout(saveTimer); saveTimer = setTimeout(async ()=>{ saveCurrentSchoolLocal(); pendingRemoteSync = true; await pushRemoteSchool(); }, 600); }
@@ -78,7 +124,9 @@ async function bootstrap(){
   document.getElementById('themeSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyTheme?.(e.target.value); syncBodyDatasetFromUiState(); });
   document.getElementById('viewSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyView?.(e.target.value); syncBodyDatasetFromUiState(); });
 
-  document.getElementById('fundSelect').innerHTML = Object.entries(FUND_LIBRARY).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
+  const fundSelect = document.getElementById('fundSelect');
+  fundSelect.replaceChildren();
+  Object.entries(FUND_LIBRARY).forEach(([k,v])=>{ const option = document.createElement('option'); option.value = k; option.textContent = v.label; fundSelect.appendChild(option); });
   rebuildSchoolPickers(); loadVersionArchive();
   const defaultSchool = SCHOOL_DB.schools['Orley Farm School']; document.getElementById('schoolName').value='Orley Farm School'; document.getElementById('feeMode').value=(defaultSchool?.feeMode)||'termly'; renderFeeRows(deepCopy((defaultSchool?.rows && defaultSchool.rows.length)? defaultSchool.rows : ORLEY_ROWS));
 
@@ -98,7 +146,7 @@ async function bootstrap(){
   document.getElementById('versionModal').addEventListener('click', e=>{ if(e.target.id==='versionModal') e.currentTarget.classList.remove('open'); });
   setInterval(()=>{ if(currentUser && pendingRemoteSync) pushRemoteSchool(); }, 10000);
 
-  const state = await initFirebaseAuth({ debugLog, onStatus:setStatus, onAuthStatus:setAuthStatus, onReady:(a,f)=>{AUTH=a; FIRESTORE=f; firebaseReady=true;}, onUserChanged: async (user)=>{ currentUser = user; if(currentUser){ setAuthStatus(`Signed in as ${currentUser.displayName || currentUser.email || currentUser.uid}. Firestore sync is active.`, 'ok'); await refreshRemoteSchools({firebaseReady,FIRESTORE,currentUser,SCHOOL_DB,setRemoteIndex:v=>{REMOTE_SCHOOL_INDEX=v;},onStatus:setStatus,onWarn:m=>setStatus(m,'warn')}); rebuildSchoolPickers(); await pushRemoteSchool(); } else { setAuthStatus('Guest mode. Local saving works; Firestore sync will use anonymous auth unless you sign in with Google.', 'warn'); } } });
+  const state = await initFirebaseAuth({ debugLog, onStatus:setStatus, onAuthStatus:setAuthStatus, onReady:(a,f)=>{AUTH=a; FIRESTORE=f; firebaseReady=true;}, onUserChanged: async (user)=>{ currentUser = user; updateUserMenuAvatar(currentUser); if(currentUser){ setAuthStatus(`Signed in as ${currentUser.displayName || currentUser.email || currentUser.uid}. Firestore sync is active.`, 'ok'); await refreshRemoteSchools({firebaseReady,FIRESTORE,currentUser,SCHOOL_DB,setRemoteIndex:v=>{REMOTE_SCHOOL_INDEX=v;},onStatus:setStatus,onWarn:m=>setStatus(m,'warn')}); rebuildSchoolPickers(); await pushRemoteSchool(); } else { setAuthStatus('Guest mode. Local saving works; Firestore sync will use anonymous auth unless you sign in with Google.', 'warn'); } } });
   firebaseReady = state.firebaseReady; AUTH = state.AUTH; FIRESTORE = state.FIRESTORE;
 
   document.getElementById('signInGoogle').addEventListener('click', ()=>signInWithGoogle({ AUTH, authInFlight, setAuthInFlight:v=>{authInFlight=v; document.getElementById('signInGoogle').disabled=v;}, debugLog, setAuthStatus, onUnauthorizedDomain:()=>setAuthStatus(`Google sign-in blocked: ${window.location.hostname || 'file://'} is not an authorised domain in Firebase Auth.`, 'bad') }));
