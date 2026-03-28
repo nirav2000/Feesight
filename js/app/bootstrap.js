@@ -13,6 +13,8 @@ let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
 let saveTimer = null; let authInFlight = false; let pendingRemoteSync = false;
+let remoteSyncBackoffMs = 5000;
+let nextRemoteSyncAt = 0;
 
 function debugLog(level, message, data){ const el = document.getElementById('debugConsole'); const ts = new Date().toISOString().replace('T',' ').slice(0,19); const line = document.createElement('div'); line.className = 'line'; line.textContent = `[${ts}] [${level}] ${message}${data ? ` | ${typeof data === 'string' ? data : JSON.stringify(data)}` : ''}`; if(el){ el.prepend(line); while(el.childNodes.length > 100) el.removeChild(el.lastChild); } }
 const setStatus = (msg, cls)=>{ const el=document.getElementById('saveStatus'); if(el){ el.className=`status ${cls}`; el.textContent=msg || ''; } };
@@ -131,7 +133,28 @@ function rebuildSchoolPickers(){
   document.getElementById('schoolCountBadge').textContent = `🏫 ${currentName}`;
 }
 function saveCurrentSchoolLocal(){ const p=schoolPayload(); if(!p.name||!p.rows.length) return; SCHOOL_DB.schools[p.name]=p; saveDb(SCHOOL_DB); rebuildSchoolPickers(); }
-async function pushRemoteSchool(){ const ok = await saveCurrentSchoolRemote({ firebaseReady, FIRESTORE, currentUser, school: schoolPayload(), onWarn:(m)=>setStatus(m,'warn'), onStatus:setStatus, dbState:SCHOOL_DB, onRemoteIndex:(name,meta)=>{REMOTE_SCHOOL_INDEX[name]=meta;} }); pendingRemoteSync = !ok; return ok; }
+async function pushRemoteSchool(){
+  if(Date.now() < nextRemoteSyncAt) return false;
+  const ok = await saveCurrentSchoolRemote({
+    firebaseReady,
+    FIRESTORE,
+    currentUser,
+    school: schoolPayload(),
+    onWarn:(m)=>setStatus(m,'warn'),
+    onStatus:setStatus,
+    dbState:SCHOOL_DB,
+    onRemoteIndex:(name,meta)=>{REMOTE_SCHOOL_INDEX[name]=meta;}
+  });
+  pendingRemoteSync = !ok;
+  if(ok){
+    remoteSyncBackoffMs = 5000;
+    nextRemoteSyncAt = 0;
+  } else {
+    nextRemoteSyncAt = Date.now() + remoteSyncBackoffMs;
+    remoteSyncBackoffMs = Math.min(remoteSyncBackoffMs * 2, 120000);
+  }
+  return ok;
+}
 function queueAutosave(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async ()=>{

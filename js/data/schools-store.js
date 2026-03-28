@@ -35,7 +35,15 @@ export async function saveCurrentSchoolRemote({firebaseReady,FIRESTORE,currentUs
 export async function refreshRemoteSchools({firebaseReady,FIRESTORE,currentUser,SCHOOL_DB,setRemoteIndex,onStatus,onWarn}){
   if(!firebaseReady || !FIRESTORE || !currentUser) return;
   try{
-    const snap = await FIRESTORE.getDocs(FIRESTORE.query(FIRESTORE.collection(FIRESTORE.db,'schools'), FIRESTORE.orderBy('searchableName')));
+    let snap;
+    try{
+      snap = await FIRESTORE.getDocs(FIRESTORE.query(FIRESTORE.collection(FIRESTORE.db,'schools'), FIRESTORE.orderBy('searchableName')));
+    } catch(err){
+      const needsIndex = err?.code === 'failed-precondition' || /requires an index/i.test(err?.message || '');
+      if(!needsIndex) throw err;
+      snap = await FIRESTORE.getDocs(FIRESTORE.query(FIRESTORE.collection(FIRESTORE.db,'schools')));
+      onWarn?.('Firestore school list index unavailable; loaded unsorted list fallback.');
+    }
     const remote = {};
     snap.forEach(docSnap=>{ const data=docSnap.data(); if(!data?.schoolName) return; remote[data.schoolName] = {id:docSnap.id}; const existing = SCHOOL_DB.schools[data.schoolName]; SCHOOL_DB.schools[data.schoolName] = { name:data.schoolName, feeMode: existing?.feeMode || 'annual', rows: Array.isArray(existing?.rows) ? existing.rows : [], updatedAt: data.updatedAt || new Date().toISOString(), source:'cloud-shared' }; });
     setRemoteIndex(remote);

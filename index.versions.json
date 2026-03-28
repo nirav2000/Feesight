@@ -3,13 +3,23 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.2.3",
-      "label": "v6.2.3 (Current)",
+      "version": "6.2.4",
+      "label": "v6.2.4 (Current)",
       "appFile": "index.html",
       "changes": [
-        "Version history now points to the main folder entrypoint",
-        "Removed archived versions/* routing from manifest",
-        "Keeps a single canonical build target"
+        "Added safer Firestore school-list fallback query when index is missing",
+        "Introduced exponential backoff for remote autosync retries",
+        "Archived previous root build as v6.2.3"
+      ]
+    },
+    {
+      "version": "6.2.3",
+      "label": "v6.2.3",
+      "appFile": "versions/6.2.3/index.html",
+      "changes": [
+        "Improved DOM-safe rendering paths in app bootstrap and chart output",
+        "Hydrated cloud-shared schools from latest remote revisions on selection",
+        "Extended Firebase query helper support for revision lookup"
       ]
     }
   ]
