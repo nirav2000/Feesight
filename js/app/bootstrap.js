@@ -23,8 +23,10 @@ const setAuthStatus = (msg, cls)=>{ const el=document.getElementById('authStatus
 function syncBodyDatasetFromUiState(){
   const theme = localStorage.getItem('feesight.ui.theme') || 'default';
   const view = localStorage.getItem('feesight.ui.view') || 'current';
+  const displayMode = localStorage.getItem('feesight.ui.displayMode') || 'table';
   document.body.dataset.theme = theme;
   document.body.dataset.view = view;
+  document.body.dataset.displayMode = displayMode;
 }
 
 const getRootPathPrefix = ()=>{ const parts = window.location.pathname.split('/').filter(Boolean); const dirParts = parts.slice(0, -1); const versionsIdx = dirParts.indexOf('versions'); if (versionsIdx === -1) return ''; return '../'.repeat(dirParts.length - versionsIdx); };
@@ -45,7 +47,7 @@ async function loadVersionArchive(){
       const item = document.createElement('div');
       item.className = 'version-item';
       const top = document.createElement('div');
-      top.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap';
+      top.className = 'version-item-head';
       const title = document.createElement('strong');
       title.textContent = entry.label || entry.version;
       const openBtn = document.createElement('button');
@@ -78,7 +80,7 @@ function updateUserMenuAvatar(user){
       const img = document.createElement('img');
       img.src = safePhotoUrl;
       img.alt = 'user';
-      img.style.cssText = 'width:22px;height:22px;border-radius:50%;vertical-align:middle';
+      img.className = 'user-avatar';
       btn.replaceChildren(img);
       return;
     }
@@ -167,12 +169,15 @@ function queueAutosave(){
 
 function build(){
   const baseRows = annualRows(); if(!baseRows.length) return;
+  const displayMode = document.body.dataset.displayMode || 'table';
   const cashRate = Number(document.getElementById('cashRate').value||0);
   const fund = getFundData(document.getElementById('fundSelect').value, cashRate);
-  populateFundMeta(fund, annualReturnsForRows(fund, Math.max(1,fund.returns.length || 1), cashRate));
+  populateFundMeta(fund, annualReturnsForRows(fund, Math.max(1,fund.returns.length || 1), cashRate), displayMode);
   const ext = extendRows(baseRows, document.getElementById('endGroup').value);
   const comp = updatedComparison(baseRows, fund, cashRate);
-  renderUpdatedTable(comp, fund); renderSummaryTable(summaryFromComparison(comp), fund); renderExtendedTable(baseRows, ext.rows, ext.avgIncrease);
+  renderUpdatedTable(comp, fund, displayMode);
+  renderSummaryTable(summaryFromComparison(comp), fund, displayMode);
+  renderExtendedTable(baseRows, ext.rows, ext.avgIncrease, displayMode);
 
   const remainingRows = ext.rows.slice(Number(document.getElementById('currentRow').value || 0));
   const exactAnnualReturns = annualReturnsForRows(fund, remainingRows.length, cashRate);
@@ -191,7 +196,7 @@ function build(){
     return;
   }
   const curve = probabilityCurve(remainingRows, 3, fund, Number(document.getElementById('simCount').value||3000), curveMin, curveMax, curveStep, cashRate);
-  renderCurve(curve, fund);
+  renderCurve(curve, fund, displayMode);
   const remainingFees = exactTerms.reduce((s,t)=>s+t.fee,0);
   const todayMeta = document.getElementById('todayMeta');
   todayMeta.replaceChildren();
@@ -207,7 +212,7 @@ function build(){
   setKpis([{label:'Remaining fees from selected point', value:money(remainingFees)},{label:'Actual-sequence capital needed', value:money(exactRequired)},{label:'50% success capital', value:curve.find(p=>p.success>=0.5)?.capital?money(curve.find(p=>p.success>=0.5).capital):'Not reached'},{label:'80% success capital', value:curve.find(p=>p.success>=0.8)?.capital?money(curve.find(p=>p.success>=0.8).capital):'Not reached'}]);
   const src = annualReturnsForRows(fund, Math.max(1, remainingRows.length), cashRate); const sorted = src.slice().sort((a,b)=>a-b), reversed=src.slice().sort((a,b)=>b-a), minRet=Math.min(...src), avRet=avg(src);
   const stress = [{name:'Best case actual order', seq: exactAnnualReturns, returnRef:`Actual stored order · avg ${pct(avRet)}`},{name:'Strongest returns first', seq: reversed.slice(0,remainingRows.length), returnRef:'Stored returns reordered best first'},{name:'Average return repeated', seq: remainingRows.map(()=>avRet), returnRef:`Flat ${pct(avRet)}`},{name:'Weakest returns first', seq: sorted.slice(0,remainingRows.length), returnRef:'Stored returns reordered worst first'},{name:'Severe stress', seq: remainingRows.map(()=>minRet), returnRef:`Repeat worst stored return ${pct(minRet)}`}] .map(s=>{ const terms=termStructure(remainingRows, 3, s.seq); const req=requiredCapitalForExactSequence(terms); const end=runDecum(req, terms).at(-1)?.end||0; return {...s, requiredStart:req, endBalance:end, outcome:req<=remainingFees?'Capital-efficient':'Needs more than fees upfront'}; });
-  renderStressTable(stress, remainingFees, fund);
+  renderStressTable(stress, remainingFees, fund, displayMode);
 }
 
 async function bootstrap(){
@@ -215,6 +220,14 @@ async function bootstrap(){
   syncBodyDatasetFromUiState();
   document.getElementById('themeSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyTheme?.(e.target.value); syncBodyDatasetFromUiState(); });
   document.getElementById('viewSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyView?.(e.target.value); syncBodyDatasetFromUiState(); });
+  const displayModeSelect = document.getElementById('displayModeSelect');
+  if(displayModeSelect){
+    displayModeSelect.addEventListener('change', e=>{
+      window.FeesightUIState?.applyDisplayMode?.(e.target.value);
+      syncBodyDatasetFromUiState();
+      build();
+    });
+  }
 
   const fundSelect = document.getElementById('fundSelect');
   fundSelect.replaceChildren();

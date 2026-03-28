@@ -1,4 +1,15 @@
 body[data-theme="default"]{
   --bg:#f5f7fb; --card:#ffffff; --ink:#1f2937; --muted:#667085; --line:#d9e1ec;
   --accent:#2952cc; --accent-soft:#eef3ff; --good:#067647; --bad:#b42318; --warn:#b54708;
+  --surface-1:#ffffff;
+  --surface-2:#eef3ff;
+  --text-1:#1f2937;
+  --text-2:#667085;
+  --border-1:#d9e1ec;
+  --border-2:#c9d3e5;
+  --table-rule:#e7edf6;
+  --pill-bg:#f7faff;
+  --input-bg:#ffffff;
+  --control-bg:#ffffff;
+  --chart-grid:#e7edf6;
 }

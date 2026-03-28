@@ -2,22 +2,12 @@
 body[data-view="command"] .app-layout{grid-template-columns:minmax(340px,.95fr) minmax(0,1.45fr);gap:20px}
 body[data-view="command"] .app-sidebar{position:sticky;top:10px;align-self:start}
 body[data-view="command"] .app-main{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px}
-body[data-view="command"] .insights-panel{
-  grid-column:span 12;
-  background:linear-gradient(135deg,#f8faff,#ffffff 55%);
-  border-color:#cfdaf2;
-}
+body[data-view="command"] .insights-panel{grid-column:span 12}
 body[data-view="command"] .insights-panel .kpis{grid-template-columns:repeat(3,minmax(180px,1fr))}
-body[data-view="command"] .insights-panel .kpi:nth-child(-n+3){
-  border-width:2px;
-  box-shadow:0 8px 20px rgba(41,82,204,.12);
-  transform:translateY(-1px);
-}
 body[data-view="command"] .insights-panel .kpi .v{font-size:28px}
 body[data-view="command"] .app-main > .table-panel{grid-column:span 6}
 body[data-view="command"] .app-main > .chart-panel{grid-column:span 12}
 body[data-view="command"] .app-secondary{grid-column:span 12;grid-template-columns:1.2fr .8fr}
-body[data-view="command"] .app-secondary .chart-panel{background:linear-gradient(180deg,#ffffff,#f8fbff)}
 body[data-view="command"] .app-main > .table-panel:nth-of-type(2){grid-column:span 12}
 @media (max-width:1250px){
   body[data-view="command"] .app-layout{grid-template-columns:1fr}

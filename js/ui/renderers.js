@@ -11,6 +11,7 @@ export const money = n => `£${fmt(Math.round(n||0))}`;
 export const pct = n => `${n>=0?'+':''}${fmt1(n)}%`;
 
 let fundTrendChart = null;
+const cssVar = (name, fallback)=>getComputedStyle(document.body).getPropertyValue(name).trim() || fallback;
 
 const sanitizeExternalUrl = rawUrl => {
   if(!rawUrl) return '';
@@ -21,7 +22,52 @@ const sanitizeExternalUrl = rawUrl => {
   return '';
 };
 
-export function populateFundMeta(fund, effectiveReturns){
+function setDisplayModeClass(el, displayMode){
+  el.dataset.displayMode = displayMode || 'table';
+}
+
+function renderCardGrid(targetId, cards){
+  const host = document.getElementById(targetId);
+  host.replaceChildren();
+  const grid = document.createElement('div');
+  grid.className = 'data-card-grid';
+  cards.forEach(card=>{
+    const article = document.createElement('article');
+    article.className = 'metric-card';
+    const title = document.createElement('h4');
+    title.className = 'metric-card-title';
+    title.textContent = card.title;
+    article.appendChild(title);
+    card.rows.forEach(([label, value])=>{
+      const row = document.createElement('div');
+      row.className = 'metric-row';
+      const l = document.createElement('span');
+      l.className = 'metric-label';
+      l.textContent = label;
+      const v = document.createElement('span');
+      v.className = 'metric-value';
+      v.textContent = value;
+      row.append(l, v);
+      article.appendChild(row);
+    });
+    grid.appendChild(article);
+  });
+  if(host.tagName === 'TABLE'){
+    const tbody = document.createElement('tbody');
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 12;
+    td.appendChild(grid);
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    host.appendChild(tbody);
+  } else {
+    host.appendChild(grid);
+  }
+}
+
+export function populateFundMeta(fund, effectiveReturns, displayMode='table'){
+  setDisplayModeClass(document.getElementById('fundMeta').closest('.panel'), displayMode);
   const fundMeta = document.getElementById('fundMeta');
   fundMeta.replaceChildren();
 
@@ -35,7 +81,7 @@ export function populateFundMeta(fund, effectiveReturns){
     kpi.append(muted, v);
     kpis.appendChild(kpi);
   });
-  const sourceNote = document.createElement('p'); sourceNote.style.marginTop = '10px'; sourceNote.textContent = fund.sourceNote || '';
+  const sourceNote = document.createElement('p'); sourceNote.className = 'source-note'; sourceNote.textContent = fund.sourceNote || '';
   const sourceP = document.createElement('p'); sourceP.className = 'source'; sourceP.append('Source: ');
   const sourceLink = document.createElement('a');
   // Trust boundary: source URL points to external docs and may be untrusted input.
@@ -56,10 +102,10 @@ export function populateFundMeta(fund, effectiveReturns){
     const tr = document.createElement('tr'); const td1 = document.createElement('td'); td1.textContent = 'Custom annual cash rate'; const td2 = document.createElement('td'); td2.textContent = pct(effectiveReturns[0] || 0); tr.append(td1, td2); tbody.appendChild(tr);
   }
   table.replaceChildren(thead, tbody);
-  renderFundTrendChart(fund, effectiveReturns);
+  renderFundTrendChart(fund, effectiveReturns, displayMode);
 }
 
-export function renderFundTrendChart(fund, effectiveReturns){
+export function renderFundTrendChart(fund, effectiveReturns, displayMode='table'){
   const returns = fund.returns.length ? fund.returns : [effectiveReturns[0] || 0];
   let value = 100;
   const pts = returns.map(r=>{ value*=1+r/100; return value; });
@@ -67,10 +113,18 @@ export function renderFundTrendChart(fund, effectiveReturns){
   const canvas = document.getElementById('fundTrendChart');
   if(!canvas || !window.Chart) return;
   if(fundTrendChart) fundTrendChart.destroy();
-  fundTrendChart = new window.Chart(canvas, { type:'line', data:{labels, datasets:[{label:'Indexed £100', data:pts, borderColor:'#2952cc', backgroundColor:'rgba(41,82,204,0.15)', tension:0.25, fill:true, pointRadius:2}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, title:{display:true,text:'Indexed growth of £100 using stored annual returns'}}, scales:{x:{grid:{display:false}}, y:{grid:{color:'#e7edf6'}}}} });
+  const isBars = displayMode === 'bars';
+  const accent = cssVar('--accent', '#2952cc');
+  const chartGrid = cssVar('--chart-grid', '#e7edf6');
+  fundTrendChart = new window.Chart(canvas, {
+    type: isBars ? 'bar' : 'line',
+    data:{labels, datasets:[{label:'Indexed £100', data:pts, borderColor:accent, backgroundColor:isBars ? `${accent}88` : `${accent}55`, tension:0.25, fill:!isBars, pointRadius:isBars ? 0 : 2}]},
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, title:{display:true,text:'Indexed growth of £100 using stored annual returns'}}, scales:{x:{grid:{display:false}}, y:{grid:{color:chartGrid}}}}
+  });
 }
 
-export function renderUpdatedTable(comp, fund){
+export function renderUpdatedTable(comp, fund, displayMode='table'){
+  setDisplayModeClass(document.getElementById('updatedTable').closest('.panel'), displayMode);
   const comparisonMeta = document.getElementById('comparisonMeta');
   comparisonMeta.replaceChildren();
   [{label:'Fund', value:fund.label},{label:'Rows analysed', value:String(comp.length)}].forEach(item=>{ const span = document.createElement('span'); span.className = 'pill'; span.textContent = `${item.label}: ${item.value}`; comparisonMeta.appendChild(span); });
@@ -78,6 +132,19 @@ export function renderUpdatedTable(comp, fund){
   const avgYoY = avg(comp.map(r=>r.feeDelta).filter(v=>v!==null));
   const avgFund = avg(comp.map(r=>r.returnPct));
   const totalGrowth = comp.reduce((s,r)=>s+r.annualGrowth,0);
+  if(displayMode === 'cards'){
+    renderCardGrid('updatedTable', comp.map(r=>({
+      title: `${r.year} · ${r.group}`,
+      rows: [
+        ['Annual fee', money(r.fee)],
+        ['Cumulative fees', money(r.cumFees)],
+        [`${fund.label} value`, money(r.fundValue)],
+        ['Fund return', pct(r.returnPct)],
+        ['Gain vs fees', money(r.gainVsFees)]
+      ]
+    })));
+    return;
+  }
 
   const table = document.getElementById('updatedTable');
   const thead = document.createElement('thead');
@@ -98,19 +165,33 @@ export function renderUpdatedTable(comp, fund){
   table.replaceChildren(thead, tbody);
 }
 
-export function renderSummaryTable(s, fund){
+export function renderSummaryTable(s, fund, displayMode='table'){
+  setDisplayModeClass(document.getElementById('summaryTable').closest('.panel'), displayMode);
   const summaryMeta = document.getElementById('summaryMeta');
   summaryMeta.replaceChildren();
   const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = `Fund: ${fund.label}`; summaryMeta.appendChild(pill);
+  const rows = [['Total fees paid', money(s.totalFees)],[`Final ${fund.type==='cash'?'cash':'fund'} value`, money(s.finalFundValue)],['Total gain vs fees', money(s.totalGainVsFees)],[`Total annual ${fund.type==='cash'?'interest':'growth'}`, money(s.totalAnnualGrowth)],['Average school fee increase', pct(s.avgSchoolFeeIncrease)],['Average fund return', pct(s.avgFundReturn)]];
+  if(displayMode === 'cards'){
+    renderCardGrid('summaryTable', [{ title: 'Summary metrics', rows }]);
+    return;
+  }
   const tbody = document.createElement('tbody');
-  [['Total fees paid', money(s.totalFees)],[`Final ${fund.type==='cash'?'cash':'fund'} value`, money(s.finalFundValue)],['Total gain vs fees', money(s.totalGainVsFees)],[`Total annual ${fund.type==='cash'?'interest':'growth'}`, money(s.totalAnnualGrowth)],['Average school fee increase', pct(s.avgSchoolFeeIncrease)],['Average fund return', pct(s.avgFundReturn)]].forEach(([label,value])=>{ const tr = document.createElement('tr'); const td1 = document.createElement('td'); td1.textContent = label; const td2 = document.createElement('td'); td2.textContent = value; tr.append(td1, td2); tbody.appendChild(tr); });
+  rows.forEach(([label,value])=>{ const tr = document.createElement('tr'); const td1 = document.createElement('td'); td1.textContent = label; const td2 = document.createElement('td'); td2.textContent = value; tr.append(td1, td2); tbody.appendChild(tr); });
   document.getElementById('summaryTable').replaceChildren(tbody);
 }
 
-export function renderExtendedTable(baseRows, extRows, avgInc){
+export function renderExtendedTable(baseRows, extRows, avgInc, displayMode='table'){
+  setDisplayModeClass(document.getElementById('extendedTable').closest('.panel'), displayMode);
   const meta = document.getElementById('extendedMeta');
   meta.replaceChildren();
   const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = `Average fee increase used for extensions: ${pct(avgInc*100)}`; meta.appendChild(pill);
+  if(displayMode === 'cards'){
+    renderCardGrid('extendedTable', extRows.map((r,i)=>({
+      title: `${r.year} · ${r.group}`,
+      rows: [['Annual fee', money(r.fee)], ['Basis', i<baseRows.length?'Entered fee':`Estimated using average increase ${pct(avgInc*100)}`]]
+    })));
+    return;
+  }
   const table = document.getElementById('extendedTable');
   const thead = document.createElement('thead');
   const trHead = document.createElement('tr');
@@ -121,7 +202,8 @@ export function renderExtendedTable(baseRows, extRows, avgInc){
   table.replaceChildren(thead, tbody);
 }
 
-export function renderCurve(points, fund){
+export function renderCurve(points, fund, displayMode='table'){
+  setDisplayModeClass(document.getElementById('curveWrap').closest('.panel'), displayMode);
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const createSvg = (tag, attrs = {})=>{
     const el = document.createElementNS(SVG_NS, tag);
@@ -132,6 +214,10 @@ export function renderCurve(points, fund){
   const xMin=Math.min(...points.map(p=>p.capital)), xMax=Math.max(...points.map(p=>p.capital));
   const x=v=>m.l+(v-xMin)/(xMax-xMin||1)*iw, y=v=>m.t+(1-v)*ih;
   const path = points.map((p,i)=>`${i?'L':'M'}${x(p.capital).toFixed(1)},${y(p.success).toFixed(1)}`).join(' ');
+  const accent = cssVar('--accent', '#2952cc');
+  const gridColor = cssVar('--chart-grid', '#e7edf6');
+  const axisColor = cssVar('--border-1', '#94a3b8');
+  const textMuted = cssVar('--text-2', '#667085');
 
   const curveMeta = document.getElementById('curveMeta');
   curveMeta.replaceChildren();
@@ -144,17 +230,17 @@ export function renderCurve(points, fund){
 
   const svg = createSvg('svg', { viewBox:`0 0 ${W} ${H}` });
   [0,0.25,0.5,0.75,1].forEach(v=>{
-    svg.appendChild(createSvg('line', { x1:m.l, y1:y(v), x2:W-m.r, y2:y(v), stroke:'#e7edf6' }));
-    const text = createSvg('text', { x:m.l-8, y:y(v)+4, 'text-anchor':'end', 'font-size':12, fill:'#667085' });
+    svg.appendChild(createSvg('line', { x1:m.l, y1:y(v), x2:W-m.r, y2:y(v), stroke:gridColor }));
+    const text = createSvg('text', { x:m.l-8, y:y(v)+4, 'text-anchor':'end', 'font-size':12, fill:textMuted });
     text.textContent = `${Math.round(v*100)}%`;
     svg.appendChild(text);
   });
-  svg.appendChild(createSvg('line', { x1:m.l, y1:H-m.b, x2:W-m.r, y2:H-m.b, stroke:'#94a3b8' }));
-  svg.appendChild(createSvg('line', { x1:m.l, y1:m.t, x2:m.l, y2:H-m.b, stroke:'#94a3b8' }));
-  svg.appendChild(createSvg('path', { d:path, fill:'none', stroke:'#2952cc', 'stroke-width':3 }));
+  svg.appendChild(createSvg('line', { x1:m.l, y1:H-m.b, x2:W-m.r, y2:H-m.b, stroke:axisColor }));
+  svg.appendChild(createSvg('line', { x1:m.l, y1:m.t, x2:m.l, y2:H-m.b, stroke:axisColor }));
+  svg.appendChild(createSvg('path', { d:path, fill:'none', stroke:accent, 'stroke-width':3 }));
 
   points.forEach(p=>{
-    const circle = createSvg('circle', { cx:x(p.capital), cy:y(p.success), r:3, fill:'#2952cc' });
+    const circle = createSvg('circle', { cx:x(p.capital), cy:y(p.success), r:3, fill:accent });
     const title = createSvg('title');
     title.textContent = `${money(p.capital)} · ${pct(p.success*100)}`;
     circle.appendChild(title);
@@ -162,15 +248,15 @@ export function renderCurve(points, fund){
   });
 
   points.filter((_,i)=>i===0 || i===points.length-1 || i%2===0).forEach(p=>{
-    const text = createSvg('text', { x:x(p.capital), y:H-12, 'text-anchor':'middle', 'font-size':12, fill:'#667085' });
+    const text = createSvg('text', { x:x(p.capital), y:H-12, 'text-anchor':'middle', 'font-size':12, fill:textMuted });
     text.textContent = `${Math.round(p.capital/1000)}k`;
     svg.appendChild(text);
   });
 
-  const xAxisLabel = createSvg('text', { x:W/2, y:H-2, 'text-anchor':'middle', 'font-size':12, fill:'#667085' });
+  const xAxisLabel = createSvg('text', { x:W/2, y:H-2, 'text-anchor':'middle', 'font-size':12, fill:textMuted });
   xAxisLabel.textContent = 'Starting capital';
   svg.appendChild(xAxisLabel);
-  const yAxisLabel = createSvg('text', { x:16, y:H/2, transform:`rotate(-90 16 ${H/2})`, 'text-anchor':'middle', 'font-size':12, fill:'#667085' });
+  const yAxisLabel = createSvg('text', { x:16, y:H/2, transform:`rotate(-90 16 ${H/2})`, 'text-anchor':'middle', 'font-size':12, fill:textMuted });
   yAxisLabel.textContent = 'Probability of success';
   svg.appendChild(yAxisLabel);
 
@@ -178,10 +264,18 @@ export function renderCurve(points, fund){
   curveWrap.replaceChildren(svg);
 }
 
-export function renderStressTable(rows, totalFees, fund){
+export function renderStressTable(rows, totalFees, fund, displayMode='table'){
+  setDisplayModeClass(document.getElementById('stressTable').closest('.panel'), displayMode);
   const stressMeta = document.getElementById('stressMeta');
   stressMeta.replaceChildren();
   [{label:'Fund', value:fund.label},{label:'Reference fees', value:money(totalFees)}].forEach(item=>{ const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = `${item.label}: ${item.value}`; stressMeta.appendChild(pill); });
+  if(displayMode === 'cards'){
+    renderCardGrid('stressTable', rows.map(r=>({
+      title: r.name,
+      rows: [['Return basis', r.returnRef], ['Required start', money(r.requiredStart)], ['Fund left', money(r.endBalance)], ['Outcome', r.outcome]]
+    })));
+    return;
+  }
   const table = document.getElementById('stressTable');
   const thead = document.createElement('thead');
   const trHead = document.createElement('tr');
