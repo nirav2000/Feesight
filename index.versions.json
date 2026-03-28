@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.2.5",
-      "label": "v6.2.5 (Current)",
+      "version": "6.2.6",
+      "label": "v6.2.6 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Improved iPhone formatting with safer single-column controls and responsive menu popover",
+        "Reduced horizontal overflow risks in the app shell and toolbar regions",
+        "Ensured footer version chip falls back to the current app version when manifest fetch fails"
+      ]
+    },
+    {
+      "version": "6.2.5",
+      "label": "v6.2.5",
+      "appFile": "versions/6.2.5/index.html",
       "changes": [
         "Added display-mode selector with table/cards/bars rendering options",
         "Centralized theme tokens and removed inline presentation styles from index shell",

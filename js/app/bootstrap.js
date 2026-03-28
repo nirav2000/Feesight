@@ -9,6 +9,7 @@ import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
+const APP_VERSION = '6.2.6';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
@@ -39,7 +40,7 @@ async function loadVersionArchive(){
     const archive = await res.json();
     const currentFile = getCurrentAppFile();
     const currentEntry = archive.versions.find(v=>v.appFile===currentFile) || archive.versions.at(-1);
-    document.getElementById('versionChip').textContent = `Version: ${currentEntry?.version || 'unknown'}`;
+    document.getElementById('versionChip').textContent = `Version: ${currentEntry?.version || APP_VERSION}`;
 
     const versionList = document.getElementById('versionList');
     versionList.replaceChildren();
@@ -66,6 +67,7 @@ async function loadVersionArchive(){
       if(entry && entry.appFile !== currentFile) window.location.href = withBust(`${getRootUrl()}${entry.appFile}`);
     }));
   }catch(err){
+    document.getElementById('versionChip').textContent = `Version: ${APP_VERSION}`;
     document.getElementById('versionStatus').textContent = `Version history could not be loaded: ${err.message}`;
   }
 }
@@ -216,6 +218,8 @@ function build(){
 }
 
 async function bootstrap(){
+  const versionChip = document.getElementById('versionChip');
+  if(versionChip) versionChip.textContent = `Version: ${APP_VERSION}`;
   if(window.FeesightUIState?.init) window.FeesightUIState.init();
   syncBodyDatasetFromUiState();
   document.getElementById('themeSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyTheme?.(e.target.value); syncBodyDatasetFromUiState(); });

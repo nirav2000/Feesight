@@ -17,14 +17,14 @@
   --focus-ring:0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 *{box-sizing:border-box}
-body{margin:0;font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+body{margin:0;font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}
 .wrap{max-width:1500px;margin:0 auto;padding:20px}
 .grid{display:grid;gap:16px}.g2{grid-template-columns:1.05fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
 .card,.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-soft)}
 .brand-card{padding:18px 20px}
 .brand-wrap{display:flex;gap:18px;align-items:center}
 .brand-copy{flex:1 1 auto}
-.brand-copy p{margin:0;color:var(--muted)}
+.brand-copy p{margin:0;color:var(--muted);overflow-wrap:anywhere}
 .brand-word{font-weight:800;letter-spacing:-0.02em}
 .brand-logo{height:64px;width:auto;max-width:220px}
 h1,h2,h3{margin:0 0 10px;line-height:1.15} p{margin:0 0 10px}.sub{color:var(--muted)}
@@ -33,7 +33,7 @@ input[type=text],input[type=number],select{width:100%;border:1px solid var(--bor
 button{border:1px solid var(--border-2);background:var(--control-bg);padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--text-1)}
 button.primary{background:var(--accent);color:#fff;border-color:var(--accent)} button.small{padding:6px 9px;font-size:12px}
 .row-flex{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
-.row-flex>div{flex:1 1 150px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.table-wrap{overflow:auto}
+.row-flex>div{flex:1 1 150px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.table-wrap{overflow:auto;max-width:100%}
 table{width:100%;border-collapse:collapse}
 th,td{border-bottom:1px solid var(--table-rule);padding:8px;text-align:left;vertical-align:top}
 th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
@@ -64,7 +64,7 @@ svg{width:100%;height:auto;display:block}
 .input-panel{position:sticky;top:8px;z-index:5}
 .input-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .input-row{display:flex;gap:10px;flex-wrap:nowrap}
-.input-row > div{min-width:120px}
+.input-row > div{min-width:0}
 .w-school{flex:2.2}.w-fee{flex:1}.w-fund{flex:1.8}.w-extend{flex:.9}.w-plan{flex:1.2}
 .panel-head,.panel-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .panel-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -117,10 +117,20 @@ body[data-view="simulator"] .app-sidebar .controls-panel{border-color:color-mix(
 body[data-view="simulator"] .insights-panel .kpi:nth-child(-n+3){background:color-mix(in srgb,var(--surface-2) 85%, var(--surface-1));border-color:color-mix(in srgb,var(--accent) 35%, var(--border-1))}
 
 @media (max-width:1100px){.g2,.g3,.split-top{grid-template-columns:1fr}.app-layout{grid-template-columns:1fr}}
+@media (max-width:900px){
+  .input-row{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+  .w-school,.w-fee,.w-fund,.w-extend,.w-plan{flex:unset}
+  .toolbar{display:grid;grid-template-columns:1fr 1fr}
+  .toolbar button{width:100%}
+  .user-pop{left:0;right:auto;max-width:min(92vw,280px)}
+}
 @media (max-width:780px){
   .wrap{padding:12px}
   .brand-wrap{flex-wrap:wrap}
-  .input-row{flex-wrap:wrap}
-  .input-row > div{min-width:calc(50% - 10px)}
+  .toolbar{grid-template-columns:1fr}
   .app-footer{align-items:flex-start}
 }
