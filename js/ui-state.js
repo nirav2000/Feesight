@@ -9,18 +9,18 @@
 
   function applyTheme(theme){
     const value = pickTheme(theme);
-    document.body.dataset.theme = value;
     localStorage.setItem(THEME_KEY, value);
     const sel = document.getElementById('themeSelect');
     if(sel && sel.value !== value) sel.value = value;
+    return value;
   }
 
   function applyView(view){
     const value = pickView(view);
-    document.body.dataset.view = value;
     localStorage.setItem(VIEW_KEY, value);
     const sel = document.getElementById('viewSelect');
     if(sel && sel.value !== value) sel.value = value;
+    return value;
   }
 
   function init(){
