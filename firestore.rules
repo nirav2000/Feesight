@@ -5,26 +5,63 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function schoolShape() {
-      return request.resource.data.keys().hasAll(['name', 'feeMode', 'rows', 'ownerUid', 'searchableName', 'updatedAt'])
-        && request.resource.data.name is string
-        && request.resource.data.feeMode in ['termly', 'annual']
-        && request.resource.data.rows is list
-        && request.resource.data.ownerUid is string
+    function isPublisher() {
+      return signedIn() && request.auth.token.role == 'publisher';
+    }
+
+    function canonicalSchoolShape() {
+      return request.resource.data.keys().hasAll(['schoolName', 'searchableName', 'createdAt', 'updatedAt', 'status', 'currentRevisionId'])
+        && request.resource.data.schoolName is string
         && request.resource.data.searchableName is string
-        && request.resource.data.updatedAt is string;
+        && request.resource.data.createdAt is string
+        && request.resource.data.updatedAt is string
+        && request.resource.data.status in ['active', 'archived']
+        && request.resource.data.currentRevisionId is string;
+    }
+
+    function feeRowShape(row) {
+      return row is map
+        && row.keys().hasAll(['academicYear', 'yearGroup', 'billingMode', 'amount'])
+        && row.academicYear is string
+        && row.yearGroup is string
+        && row.billingMode in ['termly', 'annual']
+        && row.amount is number
+        && row.amount > 0;
+    }
+
+    function revisionShape() {
+      return request.resource.data.keys().hasAll(['schoolId', 'editorUid', 'createdAt', 'action', 'status', 'snapshot'])
+        && request.resource.data.schoolId is string
+        && request.resource.data.editorUid is string
+        && request.resource.data.createdAt is string
+        && request.resource.data.action in ['create', 'update']
+        && request.resource.data.status in ['pending', 'published', 'rejected']
+        && request.resource.data.snapshot is map
+        && request.resource.data.snapshot.keys().hasAll(['schoolName', 'searchableName', 'fees'])
+        && request.resource.data.snapshot.schoolName is string
+        && request.resource.data.snapshot.searchableName is string
+        && request.resource.data.snapshot.fees is list
+        && request.resource.data.snapshot.fees.size() > 0
+        && request.resource.data.snapshot.fees.size() <= 64
+        && request.resource.data.snapshot.fees[0] is map
+        && feeRowShape(request.resource.data.snapshot.fees[0]);
     }
 
     match /schools/{schoolId} {
       allow read: if signedIn();
-      allow create: if signedIn()
-        && schoolShape()
-        && request.resource.data.ownerUid == request.auth.uid;
-      allow update: if signedIn()
-        && resource.data.ownerUid == request.auth.uid
-        && request.resource.data.ownerUid == resource.data.ownerUid
-        && schoolShape();
-      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create, update: if isPublisher() && canonicalSchoolShape();
+      allow delete: if isPublisher();
+
+      match /revisions/{revisionId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && revisionShape()
+          && request.resource.data.schoolId == schoolId
+          && request.resource.data.editorUid == request.auth.uid
+          && request.resource.data.status == 'pending';
+        allow update: if isPublisher() && revisionShape() && request.resource.data.schoolId == schoolId;
+        allow delete: if isPublisher();
+      }
     }
   }
 }
