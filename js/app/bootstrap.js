@@ -4,7 +4,7 @@
  */
 
 import { ORLEY_ROWS, FUND_LIBRARY, deepCopy, avg, getFundData, annualReturnsForRows, extendRows, updatedComparison, summaryFromComparison, termStructure, requiredCapitalForExactSequence, runDecum, probabilityCurve } from '../model/simulation.js';
-import { loadDb, saveDb, saveCurrentSchoolRemote, refreshRemoteSchools, normalizeSchoolName } from '../data/schools-store.js';
+import { loadDb, saveDb, saveCurrentSchoolRemote, refreshRemoteSchools, normalizeSchoolName, loadLatestRevisionRows } from '../data/schools-store.js';
 import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis } from '../ui/renderers.js';
 
@@ -29,7 +29,42 @@ const getRootPathPrefix = ()=>{ const parts = window.location.pathname.split('/'
 const getRootUrl = ()=> new URL(getRootPathPrefix() || '.', window.location.href).href;
 const withBust = url => { const u = new URL(url, window.location.href); u.searchParams.set('v', String(Date.now())); return u.toString(); };
 function getCurrentAppFile(){ const parts = window.location.pathname.split('/').filter(Boolean); const fileName = parts.at(-1) || 'index.html'; const versionsIdx = parts.indexOf('versions'); if (versionsIdx >= 0 && parts[versionsIdx + 1]) return `versions/${parts[versionsIdx + 1]}/${fileName}`; return fileName; }
-async function loadVersionArchive(){ try{ const res = await fetch(withBust(`${getRootUrl()}${VERSION_HISTORY_FILE}`), { cache: 'no-store' }); const archive = await res.json(); const currentFile = getCurrentAppFile(); const currentEntry = archive.versions.find(v=>v.appFile===currentFile) || archive.versions.at(-1); document.getElementById('versionChip').textContent = `Version: ${currentEntry?.version || 'unknown'}`; document.getElementById('versionList').innerHTML = archive.versions.map(entry=>`<div class="version-item"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><strong>${entry.label || entry.version}</strong><button class="open-version" data-version="${entry.version}">Open</button></div><div class="panel-note">${(entry.changes||[]).join(' • ') || 'No change notes.'}</div></div>`).join(''); document.querySelectorAll('.open-version').forEach(btn=>btn.addEventListener('click', ()=>{ const entry = archive.versions.find(v=>v.version===btn.dataset.version); if(entry && entry.appFile !== currentFile) window.location.href = withBust(`${getRootUrl()}${entry.appFile}`); })); }catch(err){ document.getElementById('versionStatus').textContent = `Version history could not be loaded: ${err.message}`; }}
+async function loadVersionArchive(){
+  try{
+    const res = await fetch(withBust(`${getRootUrl()}${VERSION_HISTORY_FILE}`), { cache: 'no-store' });
+    const archive = await res.json();
+    const currentFile = getCurrentAppFile();
+    const currentEntry = archive.versions.find(v=>v.appFile===currentFile) || archive.versions.at(-1);
+    document.getElementById('versionChip').textContent = `Version: ${currentEntry?.version || 'unknown'}`;
+
+    const versionList = document.getElementById('versionList');
+    versionList.replaceChildren();
+    archive.versions.forEach(entry=>{
+      const item = document.createElement('div');
+      item.className = 'version-item';
+      const top = document.createElement('div');
+      top.style.cssText = 'display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap';
+      const title = document.createElement('strong');
+      title.textContent = entry.label || entry.version;
+      const openBtn = document.createElement('button');
+      openBtn.className = 'open-version';
+      openBtn.dataset.version = entry.version;
+      openBtn.textContent = 'Open';
+      top.append(title, openBtn);
+      const note = document.createElement('div');
+      note.className = 'panel-note';
+      note.textContent = (entry.changes||[]).join(' • ') || 'No change notes.';
+      item.append(top, note);
+      versionList.appendChild(item);
+    });
+    versionList.querySelectorAll('.open-version').forEach(btn=>btn.addEventListener('click', ()=>{
+      const entry = archive.versions.find(v=>v.version===btn.dataset.version);
+      if(entry && entry.appFile !== currentFile) window.location.href = withBust(`${getRootUrl()}${entry.appFile}`);
+    }));
+  }catch(err){
+    document.getElementById('versionStatus').textContent = `Version history could not be loaded: ${err.message}`;
+  }
+}
 function sanitizeExternalUrl(rawUrl){ if(!rawUrl) return ''; try{ const parsed = new URL(rawUrl, window.location.href); if(parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed.href; }catch(_err){ return ''; } return ''; }
 function updateUserMenuAvatar(user){
   const btn = document.getElementById('userMenuBtn');
@@ -89,7 +124,15 @@ function rebuildSchoolPickers(){
 }
 function saveCurrentSchoolLocal(){ const p=schoolPayload(); if(!p.name||!p.rows.length) return; SCHOOL_DB.schools[p.name]=p; saveDb(SCHOOL_DB); rebuildSchoolPickers(); }
 async function pushRemoteSchool(){ const ok = await saveCurrentSchoolRemote({ firebaseReady, FIRESTORE, currentUser, school: schoolPayload(), onWarn:(m)=>setStatus(m,'warn'), onStatus:setStatus, dbState:SCHOOL_DB, onRemoteIndex:(name,meta)=>{REMOTE_SCHOOL_INDEX[name]=meta;} }); pendingRemoteSync = !ok; return ok; }
-function queueAutosave(){ clearTimeout(saveTimer); saveTimer = setTimeout(async ()=>{ saveCurrentSchoolLocal(); pendingRemoteSync = true; await pushRemoteSchool(); }, 600); }
+function queueAutosave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    saveCurrentSchoolLocal();
+    pendingRemoteSync = true;
+    setStatus('Syncing pending revision…', 'warn');
+    await pushRemoteSchool();
+  }, 600);
+}
 
 function build(){
   const baseRows = annualRows(); if(!baseRows.length) return;
@@ -107,11 +150,29 @@ function build(){
   renderTermTable(runDecum(exactRequired, exactTerms), fund);
 
   const curveMin = Number(document.getElementById('capitalMin').value||60000); const curveMax = Number(document.getElementById('capitalMax').value||240000); let curveStep = Number(document.getElementById('capitalStep').value||5000); if(!Number.isFinite(curveStep)||curveStep<=0) curveStep=5000;
-  if(curveMax<=curveMin){ document.getElementById('curveWrap').innerHTML = `<div class="status warn">Curve end capital must be greater than curve start capital.</div>`; return; }
+  if(curveMax<=curveMin){
+    const curveWrap = document.getElementById('curveWrap');
+    curveWrap.replaceChildren();
+    const warn = document.createElement('div');
+    warn.className = 'status warn';
+    warn.textContent = 'Curve end capital must be greater than curve start capital.';
+    curveWrap.appendChild(warn);
+    return;
+  }
   const curve = probabilityCurve(remainingRows, 3, fund, Number(document.getElementById('simCount').value||3000), curveMin, curveMax, curveStep, cashRate);
   renderCurve(curve, fund);
   const remainingFees = exactTerms.reduce((s,t)=>s+t.fee,0);
-  document.getElementById('todayMeta').innerHTML = `<span class="pill">Fund: ${fund.label}</span><span class="pill">Average school fee increase in data: ${pct(ext.avgIncrease*100)}</span>`;
+  const todayMeta = document.getElementById('todayMeta');
+  todayMeta.replaceChildren();
+  [
+    `Fund: ${fund.label}`,
+    `Average school fee increase in data: ${pct(ext.avgIncrease*100)}`
+  ].forEach(text=>{
+    const pill = document.createElement('span');
+    pill.className = 'pill';
+    pill.textContent = text;
+    todayMeta.appendChild(pill);
+  });
   setKpis([{label:'Remaining fees from selected point', value:money(remainingFees)},{label:'Actual-sequence capital needed', value:money(exactRequired)},{label:'50% success capital', value:curve.find(p=>p.success>=0.5)?.capital?money(curve.find(p=>p.success>=0.5).capital):'Not reached'},{label:'80% success capital', value:curve.find(p=>p.success>=0.8)?.capital?money(curve.find(p=>p.success>=0.8).capital):'Not reached'}]);
   const src = annualReturnsForRows(fund, Math.max(1, remainingRows.length), cashRate); const sorted = src.slice().sort((a,b)=>a-b), reversed=src.slice().sort((a,b)=>b-a), minRet=Math.min(...src), avRet=avg(src);
   const stress = [{name:'Best case actual order', seq: exactAnnualReturns, returnRef:`Actual stored order · avg ${pct(avRet)}`},{name:'Strongest returns first', seq: reversed.slice(0,remainingRows.length), returnRef:'Stored returns reordered best first'},{name:'Average return repeated', seq: remainingRows.map(()=>avRet), returnRef:`Flat ${pct(avRet)}`},{name:'Weakest returns first', seq: sorted.slice(0,remainingRows.length), returnRef:'Stored returns reordered worst first'},{name:'Severe stress', seq: remainingRows.map(()=>minRet), returnRef:`Repeat worst stored return ${pct(minRet)}`}] .map(s=>{ const terms=termStructure(remainingRows, 3, s.seq); const req=requiredCapitalForExactSequence(terms); const end=runDecum(req, terms).at(-1)?.end||0; return {...s, requiredStart:req, endBalance:end, outcome:req<=remainingFees?'Capital-efficient':'Needs more than fees upfront'}; });
@@ -137,7 +198,25 @@ async function bootstrap(){
   document.getElementById('recalc').addEventListener('click', build);
   document.getElementById('feeMode').addEventListener('change', ()=>{ renderFeeRows(currentRows()); build(); queueAutosave(); });
   ['fundSelect','cashRate','endGroup','currentRow','capitalMin','capitalMax','capitalStep','simCount'].forEach(id=>document.getElementById(id).addEventListener('input', build));
-  document.getElementById('schoolName').addEventListener('change', ()=>{ const exact = unionSchoolNames().find(n=>normalizeSchoolName(n)===normalizeSchoolName(document.getElementById('schoolName').value)); if(exact && SCHOOL_DB.schools[exact]){ document.getElementById('schoolName').value = SCHOOL_DB.schools[exact].name; document.getElementById('feeMode').value = SCHOOL_DB.schools[exact].feeMode || 'annual'; renderFeeRows(SCHOOL_DB.schools[exact].rows || []); } queueAutosave(); build(); });
+  document.getElementById('schoolName').addEventListener('change', async ()=>{
+    const exact = unionSchoolNames().find(n=>normalizeSchoolName(n)===normalizeSchoolName(document.getElementById('schoolName').value));
+    if(exact && SCHOOL_DB.schools[exact]){
+      const selected = SCHOOL_DB.schools[exact];
+      if((!Array.isArray(selected.rows) || !selected.rows.length) && REMOTE_SCHOOL_INDEX[exact]?.id){
+        const rows = await loadLatestRevisionRows({ firebaseReady, FIRESTORE, schoolId: REMOTE_SCHOOL_INDEX[exact].id });
+        if(rows.length){
+          selected.rows = rows;
+          selected.source = 'cloud-shared';
+          saveDb(SCHOOL_DB);
+        }
+      }
+      document.getElementById('schoolName').value = selected.name;
+      document.getElementById('feeMode').value = selected.feeMode || 'annual';
+      renderFeeRows(selected.rows || []);
+    }
+    queueAutosave();
+    build();
+  });
   document.getElementById('schoolName').addEventListener('input', ()=>{ rebuildSchoolPickers(); queueAutosave(); });
   document.getElementById('userMenuBtn').addEventListener('click', ()=>document.getElementById('userMenuPop').classList.toggle('open'));
   document.addEventListener('click', e=>{ const pop=document.getElementById('userMenuPop'); const btn=document.getElementById('userMenuBtn'); if(pop && btn && !pop.contains(e.target) && !btn.contains(e.target)) pop.classList.remove('open'); });

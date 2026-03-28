@@ -44,4 +44,23 @@ export async function refreshRemoteSchools({firebaseReady,FIRESTORE,currentUser,
   } catch(err){ onWarn?.(`Local saving is enabled. Firestore list load failed: ${err.message}`); }
 }
 
+export async function loadLatestRevisionRows({ firebaseReady, FIRESTORE, schoolId }){
+  if(!firebaseReady || !FIRESTORE || !schoolId) return [];
+  try{
+    const revisionsRef = FIRESTORE.collection(FIRESTORE.db, 'schools', schoolId, 'revisions');
+    const q = FIRESTORE.query(revisionsRef, FIRESTORE.orderBy('createdAt', 'desc'), FIRESTORE.limit(1));
+    const snap = await FIRESTORE.getDocs(q);
+    let latest = null;
+    snap.forEach(docSnap=>{ if(!latest) latest = docSnap.data(); });
+    const fees = Array.isArray(latest?.snapshot?.fees) ? latest.snapshot.fees : [];
+    return fees.map(fee=>({
+      year: String(fee?.academicYear || '').trim(),
+      group: String(fee?.yearGroup || '').trim(),
+      feeInput: Number(fee?.amount || 0)
+    })).filter(row=>row.year && row.group && row.feeInput > 0);
+  } catch(_err){
+    return [];
+  }
+}
+
 export function normalizeSchoolName(s){ return normalizeName(s); }

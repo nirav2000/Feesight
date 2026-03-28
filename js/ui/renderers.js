@@ -161,4 +161,22 @@ export function renderTermTable(rows, fund){
   table.replaceChildren(thead, tbody);
 }
 
-export function setKpis(items){ document.getElementById('todayKpis').innerHTML = items.map(k=>`<div class="kpi"><div class="muted">${k.label}</div><div class="v ${k.className||''}">${k.value}</div></div>`).join(''); }
+export function setKpis(items){
+  const container = document.getElementById('todayKpis');
+  container.replaceChildren();
+  items.forEach(item=>{
+    const kpi = document.createElement('div');
+    kpi.className = 'kpi';
+
+    const label = document.createElement('div');
+    label.className = 'muted';
+    label.textContent = item.label;
+
+    const value = document.createElement('div');
+    value.className = `v ${item.className || ''}`.trim();
+    value.textContent = item.value;
+
+    kpi.append(label, value);
+    container.appendChild(kpi);
+  });
+}
