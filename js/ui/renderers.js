@@ -3,7 +3,7 @@
  * Boundaries: DOM/chart rendering only; receives prepared data.
  */
 
-import { avg, formatYearGroupLabel, BENCHMARK_FEES, GCSE_HEADLINES } from '../model/simulation.js';
+import { avg, formatYearGroupLabel, BENCHMARK_FEES, GCSE_HEADLINES, ALEVEL_HEADLINES } from '../model/simulation.js';
 
 export const fmt = n => new Intl.NumberFormat('en-GB',{maximumFractionDigits:0}).format(n);
 export const fmt1 = n => new Intl.NumberFormat('en-GB',{minimumFractionDigits:1,maximumFractionDigits:1}).format(n);
@@ -378,6 +378,10 @@ export function renderBenchmarkTables(){
     BENCHMARK_FEES.map(r=>[r.stage,r.mts,r.mtsInc,r.habs,r.habsInc,r.orley,r.orleyInc,r.johnLyon,r.johnLyonInc])
   );
   renderGcseTable('benchmarkGcseTable', GCSE_HEADLINES, ['2025','2024','2023','2022']);
+  renderSimpleTable('benchmarkAlevelTable',
+    ['School','2025','2024','2023','2022'],
+    ALEVEL_HEADLINES.map(r=>[r.school,r.y2025,r.y2024,r.y2023,r.y2022])
+  );
 }
 
 function renderGcseTable(id, rows, years){

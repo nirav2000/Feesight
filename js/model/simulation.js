@@ -21,7 +21,7 @@ export const ORLEY_ROWS = [
   {year:'2026–27', group:'Y5', feeInput:8326}
 ];
 
-// Source dataset: school_full.md
+// Source datasets: school_full.md and schools_full.md
 export const BENCHMARK_FEES = [
   { stage:'Pre-Prep', mts:'£7,792', mtsInc:'—', habs:'£8,413', habsInc:'—', orley:'£6,973', orleyInc:'—', johnLyon:'£5,967', johnLyonInc:'—' },
   { stage:'Prep', mts:'£8,183', mtsInc:'5.0%', habs:'£9,849', habsInc:'17.1%', orley:'£7,415', orleyInc:'6.3%', johnLyon:'£6,790', johnLyonInc:'13.8%' },
@@ -71,6 +71,15 @@ export const GCSE_HEADLINES = [
 ];
 
 
+
+
+export const ALEVEL_HEADLINES = [
+  { school:'HABS', y2025:'46% A*; 79% A*–A', y2024:'38% A*; 75% A*–A', y2023:'48% A*; 81% A*–A', y2022:'—' },
+  { school:'MTS', y2025:'33% A*; 70% A*–A', y2024:'36% A*; 71% A*–A', y2023:'33% A*; 70% A*–A', y2022:'34% A*; 76% A*–A' },
+  { school:'John Lyon', y2025:'—; 43% A*–A', y2024:'12% A*; 45% A*–A', y2023:'—', y2022:'—' },
+  { school:'Harrow School', y2025:'~33% A*; 65% A*–A', y2024:'32% A*; 67% A*–A', y2023:'~33% A*; 60% A*–A', y2022:'40% A*' },
+  { school:'Pinner High', y2025:'22% A*–A', y2024:'~25% A*–A', y2023:'30% A*–A', y2022:'—' }
+];
 export const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
 
 
