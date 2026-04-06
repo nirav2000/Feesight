@@ -3,13 +3,13 @@
  * Boundaries: wire modules, DOM events, state orchestration, and body dataset syncing.
  */
 
-import { ORLEY_ROWS, FUND_LIBRARY, deepCopy, avg, getFundData, annualReturnsForRows, extendRows, updatedComparison, summaryFromComparison, termStructure, requiredCapitalForExactSequence, runDecum, probabilityCurve, formatYearGroupLabel } from '../model/simulation.js';
+import { ORLEY_ROWS, FUND_LIBRARY, deepCopy, avg, getFundData, annualReturnsForRows, extendRows, updatedComparison, summaryFromComparison, termStructure, requiredCapitalForExactSequence, runDecum, probabilityCurve, formatYearGroupLabel, normalizeYearGroup } from '../model/simulation.js';
 import { loadDb, saveDb, saveCurrentSchoolRemote, refreshRemoteSchools, normalizeSchoolName, loadLatestRevisionRows } from '../data/schools-store.js';
 import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.2.8';
+const APP_VERSION = '6.2.9';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
@@ -95,7 +95,7 @@ function updateUserMenuAvatar(user){
 
 const unionSchoolNames = ()=> [...new Set([...Object.keys(SCHOOL_DB.schools), ...Object.keys(REMOTE_SCHOOL_INDEX)])].sort((a,b)=>a.localeCompare(b));
 const currentRows = ()=> [...document.querySelectorAll('#feeInputTable tbody tr')].map(tr=>({ year: tr.querySelector('.year').value.trim(), group: tr.querySelector('.group').value.trim(), feeInput: Number(tr.querySelector('.feeInput').value||0) })).filter(r=>r.year && r.group && r.feeInput>0);
-const annualRows = ()=> currentRows().map(r=>({year:r.year, group:r.group, fee: document.getElementById('feeMode').value === 'termly' ? r.feeInput*3 : r.feeInput }));
+const annualRows = ()=> currentRows().map(r=>({year:r.year, group:normalizeYearGroup(r.group), fee: document.getElementById('feeMode').value === 'termly' ? r.feeInput*3 : r.feeInput }));
 const schoolPayload = ()=> ({ name: document.getElementById('schoolName').value.trim(), feeMode: document.getElementById('feeMode').value, rows: currentRows(), updatedAt: new Date().toISOString(), source:'user' });
 
 function refreshCurrentRowOptions(){

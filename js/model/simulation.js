@@ -41,8 +41,16 @@ export const YEAR_GROUP_AGE_MAP = {
 };
 export const YEAR_GROUP_ORDER = ['Reception','Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8','Y9','Y10','Y11','Y12','Y13'];
 const UPPER_TO_SENIOR_EXTRA_UPLIFT = 0.30; // +30 percentage points on top of baseline annual increase
+export function normalizeYearGroup(group){
+  const raw = String(group || '').trim();
+  if(!raw) return raw;
+  if(/^reception\b/i.test(raw)) return 'Reception';
+  const yearMatch = raw.match(/\bY\s*([0-9]{1,2})\b/i);
+  if(yearMatch) return `Y${Number(yearMatch[1])}`;
+  return raw;
+}
 export function formatYearGroupLabel(group){
-  const key = String(group || '').trim();
+  const key = normalizeYearGroup(group);
   const age = YEAR_GROUP_AGE_MAP[key];
   return age ? `${key} - ${age}` : key;
 }
@@ -60,9 +68,11 @@ export function annualReturnsForRows(fund, count, cashRate){
 export function avgFeeIncrease(rows){ const ch=[]; for(let i=1;i<rows.length;i++) ch.push(rows[i].fee/rows[i-1].fee - 1); return avg(ch); }
 export function extendRows(rows, endGroup){
   const order = YEAR_GROUP_ORDER;
-  const out = deepCopy(rows); const g = avgFeeIncrease(rows); let prev = out[out.length-1];
-  const startIdx = order.indexOf(prev.group);
-  const endIdx = order.indexOf(endGroup);
+  const out = deepCopy(rows).map(r=>({ ...r, group: normalizeYearGroup(r.group) }));
+  const g = avgFeeIncrease(rows);
+  let prev = out[out.length-1];
+  const startIdx = order.indexOf(normalizeYearGroup(prev.group));
+  const endIdx = order.indexOf(normalizeYearGroup(endGroup));
   if(startIdx < 0 || endIdx < 0 || endIdx <= startIdx) return {rows:out, avgIncrease:g};
   for(let idx=startIdx+1; idx<=endIdx; idx++){
     const y0 = Number(prev.year.slice(0,4)) + 1;
