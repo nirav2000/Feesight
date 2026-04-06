@@ -3,9 +3,18 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.9",
-      "label": "v6.3.9 (Current)",
+      "version": "6.3.10",
+      "label": "v6.3.10 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Cleaned benchmark table display by rendering N/A, Not published, Not available, and \u2014 as blank cells",
+        "Archived previous build as v6.3.9"
+      ]
+    },
+    {
+      "version": "6.3.9",
+      "label": "v6.3.9",
+      "appFile": "versions/6.3.9/index.html",
       "changes": [
         "Replaced separate JSON benchmark panels with in-situ table editing (click cell, edit, save)",
         "Added add-row controls per benchmark table (fees/GCSE/A-level)",

@@ -12,6 +12,8 @@ export const pct = n => `${n>=0?'+':''}${fmt1(n)}%`;
 
 let fundTrendChart = null;
 const cssVar = (name, fallback)=>getComputedStyle(document.body).getPropertyValue(name).trim() || fallback;
+const BENCHMARK_BLANKS = new Set(['n/a','not published','not available','—']);
+function cleanBenchmarkCell(value){ const raw = String(value ?? '').trim(); return BENCHMARK_BLANKS.has(raw.toLowerCase()) ? '' : raw; }
 
 const sanitizeExternalUrl = rawUrl => {
   if(!rawUrl) return '';
@@ -419,7 +421,7 @@ function renderAlevelTable(id, rows, years){
       const stats = row.stats?.[year] || {};
       [stats.astar, stats.astarA].forEach(value=>{
         const td = document.createElement('td');
-        td.textContent = value || '—';
+        td.textContent = cleanBenchmarkCell(value || '');
         tr.appendChild(td);
       });
     });
@@ -467,7 +469,7 @@ function renderGcseTable(id, rows, years){
       const stats = row.stats?.[year] || {};
       [stats.grade9, stats.grade98, stats.grade97].forEach(value=>{
         const td = document.createElement('td');
-        td.textContent = value || '—';
+        td.textContent = cleanBenchmarkCell(value || '');
         tr.appendChild(td);
       });
     });
@@ -487,7 +489,7 @@ function renderSimpleTable(id, headers, rows){
   const tbody = document.createElement('tbody');
   rows.forEach(row=>{
     const tr = document.createElement('tr');
-    row.forEach(cell=>{ const td = document.createElement('td'); td.textContent = String(cell || ''); tr.appendChild(td); });
+    row.forEach(cell=>{ const td = document.createElement('td'); td.textContent = cleanBenchmarkCell(cell); tr.appendChild(td); });
     tbody.appendChild(tr);
   });
   table.replaceChildren(thead, tbody);
