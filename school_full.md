@@ -11,9 +11,9 @@
 
 ## GCSE / IGCSE headlines
 
-| School | 2025 | 2024 | 2023 | 2022 |
-|---|---|---|---|---|
-| HABS | 47% grade 9; 73% grades 9–8; 88% grades 9–7 | 53% grade 9; 78.4% grades 9–8; 91.5% grades 9–7 | 51.1% grade 9; 73.4% grades 9–8 | Not found |
-| MTS | 43% grade 9; 71% grades 9–8; 88% grades 9–7 | 39% grade 9; 70% grades 9–8; 87.7% grades 9–7 | 68.3% grades 9–8; 86.2% grades 9–7 | 77.8% grades 9–8; 93.1% grades 9–7 |
-| John Lyon | 17% grade 9; 41% grades 9–8; 62% grades 9–7 | 20% grade 9; 43% grades 9–8; 64% grades 9–7 | Not found | Not found |
-| Orley Farm | N/A (prep school: no GCSE cohort) | N/A (prep school: no GCSE cohort) | N/A (prep school: no GCSE cohort) | N/A (prep school: no GCSE cohort) |
+| School | 2025 Grade 9 | 2025 Grade 9–8 | 2025 Grade 9–7 | 2024 Grade 9 | 2024 Grade 9–8 | 2024 Grade 9–7 | 2023 Grade 9 | 2023 Grade 9–8 | 2023 Grade 9–7 | 2022 Grade 9 | 2022 Grade 9–8 | 2022 Grade 9–7 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| HABS | 47% | 73% | 88% | 53% | 78.4% | 91.5% | 51.1% | 73.4% | — | Not found | Not found | Not found |
+| MTS | 43% | 71% | 88% | 39% | 70% | 87.7% | — | 68.3% | 86.2% | — | 77.8% | 93.1% |
+| John Lyon | 17% | 41% | 62% | 20% | 43% | 64% | Not found | Not found | Not found | Not found | Not found | Not found |
+| Orley Farm | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |

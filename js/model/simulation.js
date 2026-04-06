@@ -32,10 +32,42 @@ export const BENCHMARK_FEES = [
 ];
 
 export const GCSE_HEADLINES = [
-  { school:'HABS', y2025:'47% grade 9; 73% grades 9–8; 88% grades 9–7', y2024:'53% grade 9; 78.4% grades 9–8; 91.5% grades 9–7', y2023:'51.1% grade 9; 73.4% grades 9–8', y2022:'Not found' },
-  { school:'MTS', y2025:'43% grade 9; 71% grades 9–8; 88% grades 9–7', y2024:'39% grade 9; 70% grades 9–8; 87.7% grades 9–7', y2023:'68.3% grades 9–8; 86.2% grades 9–7', y2022:'77.8% grades 9–8; 93.1% grades 9–7' },
-  { school:'John Lyon', y2025:'17% grade 9; 41% grades 9–8; 62% grades 9–7', y2024:'20% grade 9; 43% grades 9–8; 64% grades 9–7', y2023:'Not found', y2022:'Not found' },
-  { school:'Orley Farm', y2025:'N/A (prep school: no GCSE cohort)', y2024:'N/A (prep school: no GCSE cohort)', y2023:'N/A (prep school: no GCSE cohort)', y2022:'N/A (prep school: no GCSE cohort)' }
+  {
+    school:'HABS',
+    stats:{
+      '2025':{ grade9:'47%', grade98:'73%', grade97:'88%' },
+      '2024':{ grade9:'53%', grade98:'78.4%', grade97:'91.5%' },
+      '2023':{ grade9:'51.1%', grade98:'73.4%', grade97:'—' },
+      '2022':{ grade9:'Not found', grade98:'Not found', grade97:'Not found' }
+    }
+  },
+  {
+    school:'MTS',
+    stats:{
+      '2025':{ grade9:'43%', grade98:'71%', grade97:'88%' },
+      '2024':{ grade9:'39%', grade98:'70%', grade97:'87.7%' },
+      '2023':{ grade9:'—', grade98:'68.3%', grade97:'86.2%' },
+      '2022':{ grade9:'—', grade98:'77.8%', grade97:'93.1%' }
+    }
+  },
+  {
+    school:'John Lyon',
+    stats:{
+      '2025':{ grade9:'17%', grade98:'41%', grade97:'62%' },
+      '2024':{ grade9:'20%', grade98:'43%', grade97:'64%' },
+      '2023':{ grade9:'Not found', grade98:'Not found', grade97:'Not found' },
+      '2022':{ grade9:'Not found', grade98:'Not found', grade97:'Not found' }
+    }
+  },
+  {
+    school:'Orley Farm',
+    stats:{
+      '2025':{ grade9:'N/A', grade98:'N/A', grade97:'N/A' },
+      '2024':{ grade9:'N/A', grade98:'N/A', grade97:'N/A' },
+      '2023':{ grade9:'N/A', grade98:'N/A', grade97:'N/A' },
+      '2022':{ grade9:'N/A', grade98:'N/A', grade97:'N/A' }
+    }
+  }
 ];
 
 

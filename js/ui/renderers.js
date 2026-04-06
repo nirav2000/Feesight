@@ -377,10 +377,55 @@ export function renderBenchmarkTables(){
     ['Stage','MTS','% inc','HABS','% inc','Orley Farm','% inc','John Lyon','% inc'],
     BENCHMARK_FEES.map(r=>[r.stage,r.mts,r.mtsInc,r.habs,r.habsInc,r.orley,r.orleyInc,r.johnLyon,r.johnLyonInc])
   );
-  renderSimpleTable('benchmarkGcseTable',
-    ['School','2025','2024','2023','2022'],
-    GCSE_HEADLINES.map(r=>[r.school,r.y2025,r.y2024,r.y2023,r.y2022])
-  );
+  renderGcseTable('benchmarkGcseTable', GCSE_HEADLINES, ['2025','2024','2023','2022']);
+}
+
+function renderGcseTable(id, rows, years){
+  const table = document.getElementById(id);
+  if(!table) return;
+
+  const thead = document.createElement('thead');
+  const top = document.createElement('tr');
+  const schoolHeader = document.createElement('th');
+  schoolHeader.rowSpan = 2;
+  schoolHeader.textContent = 'School';
+  top.appendChild(schoolHeader);
+  years.forEach(year=>{
+    const th = document.createElement('th');
+    th.colSpan = 3;
+    th.textContent = year;
+    top.appendChild(th);
+  });
+  thead.appendChild(top);
+
+  const sub = document.createElement('tr');
+  years.forEach(()=>{
+    ['Grade 9','Grade 9–8','Grade 9–7'].forEach(label=>{
+      const th = document.createElement('th');
+      th.textContent = label;
+      sub.appendChild(th);
+    });
+  });
+  thead.appendChild(sub);
+
+  const tbody = document.createElement('tbody');
+  rows.forEach(row=>{
+    const tr = document.createElement('tr');
+    const school = document.createElement('td');
+    school.textContent = row.school;
+    tr.appendChild(school);
+    years.forEach(year=>{
+      const stats = row.stats?.[year] || {};
+      [stats.grade9, stats.grade98, stats.grade97].forEach(value=>{
+        const td = document.createElement('td');
+        td.textContent = value || '—';
+        tr.appendChild(td);
+      });
+    });
+    tbody.appendChild(tr);
+  });
+
+  table.replaceChildren(thead, tbody);
 }
 
 function renderSimpleTable(id, headers, rows){

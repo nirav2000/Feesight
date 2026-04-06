@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.2",
-      "label": "v6.3.2 (Current)",
+      "version": "6.3.3",
+      "label": "v6.3.3 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Redesigned GCSE benchmark table with two-level headers: Year -> Grade 9 / Grade 9\u20138 / Grade 9\u20137",
+        "Normalized GCSE benchmark source values into structured per-year/per-band fields",
+        "Archived previous build as v6.3.2"
+      ]
+    },
+    {
+      "version": "6.3.2",
+      "label": "v6.3.2",
+      "appFile": "versions/6.3.2/index.html",
       "changes": [
         "Removed A-level benchmark section to match requested scope (4 schools + GCSE table)",
         "Kept normalized 4-school row-format loader defaults sourced from the school_full dataset",
