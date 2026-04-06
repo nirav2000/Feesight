@@ -3,13 +3,23 @@
  * Boundaries: localStorage persistence + Firestore payload/schema mapping + remote read/write.
  */
 
-import { ORLEY_ROWS, deepCopy } from '../model/simulation.js';
+import { SAMPLE_SCHOOL_ROWS, deepCopy } from '../model/simulation.js';
 
 const STORAGE_KEY = 'feesight.schooldb.v2';
 const normalizeName = s => (s||'').trim().toLowerCase();
 
 export function docIdFromName(name){ return normalizeName(name).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,120) || 'school'; }
-export function defaultDb(){ return { schools:{ 'Orley Farm School':{name:'Orley Farm School',feeMode:'termly',rows:deepCopy(ORLEY_ROWS),updatedAt:new Date().toISOString(),source:'sample'} } }; }
+export function defaultDb(){
+  const now = new Date().toISOString();
+  return {
+    schools:{
+      'Orley Farm School':{name:'Orley Farm School',feeMode:'termly',rows:deepCopy(SAMPLE_SCHOOL_ROWS['Orley Farm School']),updatedAt:now,source:'sample'},
+      'Merchant Taylors School':{name:'Merchant Taylors School',feeMode:'termly',rows:deepCopy(SAMPLE_SCHOOL_ROWS['Merchant Taylors School']),updatedAt:now,source:'sample'},
+      'Haberdashers Boys':{name:'Haberdashers Boys',feeMode:'termly',rows:deepCopy(SAMPLE_SCHOOL_ROWS['Haberdashers Boys']),updatedAt:now,source:'sample'},
+      'The John Lyon School':{name:'The John Lyon School',feeMode:'termly',rows:deepCopy(SAMPLE_SCHOOL_ROWS['The John Lyon School']),updatedAt:now,source:'sample'}
+    }
+  };
+}
 export function loadDb(){ const fallback=defaultDb(); try{ const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; return {schools:{...fallback.schools, ...(saved.schools || {})}}; }catch{ return fallback; } }
 export function saveDb(db){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
 

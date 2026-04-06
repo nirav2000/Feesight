@@ -3,13 +3,23 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.0",
-      "label": "v6.3.0 (Current)",
+      "version": "6.3.1",
+      "label": "v6.3.1 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Normalized raw comparator fee tables into row-format school datasets for MTS, HABS, John Lyon, and Orley Farm",
+        "Seeded school loader defaults with all four schools so they are immediately selectable",
+        "Focused benchmark attainment table to the requested 4-school GCSE set"
+      ]
+    },
+    {
+      "version": "6.3.0",
+      "label": "v6.3.0",
+      "appFile": "versions/6.3.0/index.html",
       "changes": [
         "Added benchmark fees, GCSE/IGCSE, and A-level tables for MTS/HABS/Orley/John Lyon comparators",
         "Inserted school benchmark panel directly into the app UI for quick reference",
-        "Improved fee projection robustness with normalized year-group parsing and Y8→Y9 transition uplift"
+        "Improved fee projection robustness with normalized year-group parsing and Y8\u2192Y9 transition uplift"
       ]
     },
     {
@@ -18,7 +28,7 @@
       "appFile": "versions/6.2.9/index.html",
       "changes": [
         "Normalized year-group parsing so labels like 'Y8 - 12+' map to canonical year groups",
-        "Ensured Y8→Y9 +30.0% transition uplift applies even when stored labels include ages",
+        "Ensured Y8\u2192Y9 +30.0% transition uplift applies even when stored labels include ages",
         "Preserved transition basis notes and totals in Extended Fees and Term-by-Term outputs"
       ]
     },
@@ -27,7 +37,7 @@
       "label": "v6.2.8",
       "appFile": "versions/6.2.8/index.html",
       "changes": [
-        "Applied +30.0% upper-to-senior uplift at Y8→Y9 on top of baseline annual increase",
+        "Applied +30.0% upper-to-senior uplift at Y8\u2192Y9 on top of baseline annual increase",
         "Updated extended fee basis text and metadata to show transition uplift assumptions",
         "Kept Year Group + age notation and total/average summary rows in planning tables"
       ]
