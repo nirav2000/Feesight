@@ -9,7 +9,7 @@ import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis, renderBenchmarkTables } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.3.12';
+const APP_VERSION = '6.3.13';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
@@ -20,6 +20,25 @@ const BENCHMARK_DATA_KEY = 'feesight.ui.benchmarkData.v1';
 
 const defaultBenchmarkData = ()=>({ fees: deepCopy(BENCHMARK_FEES), gcse: deepCopy(GCSE_HEADLINES), alevel: deepCopy(ALEVEL_HEADLINES) });
 let BENCHMARK_DATA = defaultBenchmarkData();
+
+function migrateBenchmarkFeesRows(rows){
+  if(!Array.isArray(rows)) return rows;
+  return rows.map(row=>{
+    const stage = String(row?.stage || '').trim();
+    if(stage === 'Total to Y8' || stage === 'Total to Y8 (weighted years)'){
+      return { ...row, stage:'Total to Y8 (Y1–Y8 weighted years)', mts:'£64,682', habs:'£77,068', orley:'£59,694', johnLyon:'£57,926' };
+    }
+    if(stage === 'Total incl. Y9+' || stage === 'Total incl. Y9+ (weighted years)'){
+      return { ...row, stage:'Total incl. Y9+ (Y1–Y9 weighted years)', mts:'£75,331', habs:'£87,491', orley:'—', johnLyon:'£67,342' };
+    }
+    return row;
+  });
+}
+
+function migrateBenchmarkData(data){
+  if(!data || !Array.isArray(data.fees) || !Array.isArray(data.gcse) || !Array.isArray(data.alevel)) return defaultBenchmarkData();
+  return { ...data, fees: migrateBenchmarkFeesRows(data.fees) };
+}
 
 function debugLog(level, message, data){ const el = document.getElementById('debugConsole'); const ts = new Date().toISOString().replace('T',' ').slice(0,19); const line = document.createElement('div'); line.className = 'line'; line.textContent = `[${ts}] [${level}] ${message}${data ? ` | ${typeof data === 'string' ? data : JSON.stringify(data)}` : ''}`; if(el){ el.prepend(line); while(el.childNodes.length > 100) el.removeChild(el.lastChild); } }
 const setStatus = (msg, cls)=>{ const el=document.getElementById('saveStatus'); if(el){ el.className=`status ${cls}`; el.textContent=msg || ''; } };
@@ -186,8 +205,10 @@ function initTopTabs(){
 function loadBenchmarkData(){
   try{
     const parsed = JSON.parse(localStorage.getItem(BENCHMARK_DATA_KEY) || 'null');
-    if(parsed && Array.isArray(parsed.fees) && Array.isArray(parsed.gcse) && Array.isArray(parsed.alevel)) BENCHMARK_DATA = parsed;
+    if(parsed && Array.isArray(parsed.fees) && Array.isArray(parsed.gcse) && Array.isArray(parsed.alevel)) BENCHMARK_DATA = migrateBenchmarkData(parsed);
   }catch(_err){ BENCHMARK_DATA = defaultBenchmarkData(); }
+  BENCHMARK_DATA = migrateBenchmarkData(BENCHMARK_DATA);
+  localStorage.setItem(BENCHMARK_DATA_KEY, JSON.stringify(BENCHMARK_DATA));
 }
 function saveBenchmarkData(){
   localStorage.setItem(BENCHMARK_DATA_KEY, JSON.stringify(BENCHMARK_DATA));
