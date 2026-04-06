@@ -6,13 +6,13 @@
 <base href="../../">
 <title>Feesight - School Fees Analyser</title>
 
-<link rel="stylesheet" href="../styles/base.css">
-<link rel="stylesheet" href="../styles/theme-default.css">
-<link rel="stylesheet" href="../styles/theme-dark.css">
-<link rel="stylesheet" href="../styles/view-current.css">
-<link rel="stylesheet" href="../styles/view-command.css">
-<link rel="stylesheet" href="../styles/view-story.css">
-<link rel="stylesheet" href="../styles/view-simulator.css">
+<link rel="stylesheet" href="./styles/base.css">
+<link rel="stylesheet" href="./styles/theme-default.css">
+<link rel="stylesheet" href="./styles/theme-dark.css">
+<link rel="stylesheet" href="./styles/view-current.css">
+<link rel="stylesheet" href="./styles/view-command.css">
+<link rel="stylesheet" href="./styles/view-story.css">
+<link rel="stylesheet" href="./styles/view-simulator.css">
 
 
 
@@ -20,27 +20,29 @@
 <body data-theme="default" data-view="current">
 <!-- App shell architecture: body[data-theme][data-view] drives layout and theme styles. -->
 <div class="app-shell wrap grid">
-  <header class="app-header brand-card hero-panel" style="padding:4px 0 0">
+  <header class="app-header brand-card hero-panel hero-panel-compact">
     <div class="brand-wrap app-toolbar">
-      <img class="brand-logo" src="../feesight-logo-light.svg" alt="Feesight logo">
+      <img class="brand-logo" src="./feesight-logo-light.svg" alt="Feesight logo">
       <div class="brand-copy">
         <p class="sub">School fees analyser with drawdown, stress testing, and fund comparisons. Stored fund return points are source-backed and net of fund fees where stated.</p>
       </div>
       <div class="user-menu auth-panel">
         <button id="userMenuBtn" class="small">👤</button>
         <div id="userMenuPop" class="user-pop">
-          <div id="authStatus" class="status warn" style="margin:0 0 8px"></div>
-          <label style="display:block;margin:0 0 6px;font-weight:600">Theme</label>
-          <select id="themeSelect" style="width:100%;margin-bottom:8px"><option value="default">Default</option><option value="dark">Dark</option></select>
-          <label style="display:block;margin:0 0 6px;font-weight:600">View</label>
-          <select id="viewSelect" style="width:100%;margin-bottom:8px"><option value="current">Current</option><option value="command">Command</option><option value="story">Story</option><option value="simulator">Simulator</option></select>
-          <button id="signInGoogle" class="primary" style="width:100%;margin-bottom:6px">Sign in with Google</button>
-          <button id="signOutBtn" style="width:100%">Sign out</button>
+          <div id="authStatus" class="status warn user-pop-status"></div>
+          <label class="menu-label">Theme</label>
+          <select id="themeSelect" class="menu-select"><option value="default">Default</option><option value="dark">Dark</option></select>
+          <label class="menu-label">View</label>
+          <select id="viewSelect" class="menu-select"><option value="current">Current</option><option value="command">Command</option><option value="story">Story</option><option value="simulator">Simulator</option></select>
+          <label class="menu-label">Display mode</label>
+          <select id="displayModeSelect" class="menu-select"><option value="table">Tables</option><option value="cards">Cards</option><option value="bars">Bars</option></select>
+          <button id="signInGoogle" class="primary btn-full btn-gap-sm">Sign in with Google</button>
+          <button id="signOutBtn" class="btn-full">Sign out</button>
         </div>
       </div>
     </div>
   </header>
-  <details id="authDebugDetails" style="margin-top:4px;display:none">
+  <details id="authDebugDetails" class="auth-debug-details">
     <summary>In-app debug console</summary>
     <div id="debugConsole" class="debug-console"></div>
   </details>
@@ -52,7 +54,7 @@
         <div class="w-school control-group"><label>School</label><input id="schoolName" type="text" list="schoolSuggestions" placeholder="Type or select saved school"><datalist id="schoolSuggestions"></datalist></div>
         <div class="w-fee control-group"><label>Fee mode</label><select id="feeMode"><option value="annual">Annual</option><option value="termly">Termly</option></select></div>
         <div class="w-fund control-group"><label>Fund / cash option</label><select id="fundSelect"></select></div>
-        <div class="w-extend control-group"><label>Extend fees to</label><select id="endGroup"><option>Y6</option><option>Y7</option><option>Y8</option></select></div>
+        <div class="w-extend control-group"><label>Extend fees to</label><select id="endGroup"><option value="Y6">Y6 - 10+</option><option value="Y7">Y7 - 11+</option><option value="Y8">Y8 - 12+</option><option value="Y9">Y9 - 13+</option><option value="Y10">Y10 - 14+ (GCSE)</option><option value="Y11">Y11 - 15+ (GCSE)</option><option value="Y12">Y12 - 16+ (A-Level)</option><option value="Y13">Y13 - 17+ (A-Level)</option></select></div>
         <div class="w-plan control-group"><label>Plan from row</label><select id="currentRow"></select></div>
       </div>
       <div class="toolbar">
@@ -66,14 +68,14 @@
     </section>
 
     <section class="card panel chart-panel data-card">
-      <div class="panel-head"><h2>Fund data points and sources</h2><div class="panel-actions"><label style="margin:0">Cash annual rate (%)</label><input id="cashRate" type="number" value="3.75" step="0.01" style="width:120px"></div></div>
+      <div class="panel-head"><h2>Fund data points and sources</h2><div class="panel-actions"><label class="label-inline">Cash annual rate (%)</label><input id="cashRate" class="input-sm" type="number" value="3.75" step="0.01"></div></div>
       <div id="fundMeta"></div>
       <div class="grid g2">
         <details open>
           <summary>Stored return data points used by the model</summary>
           <div class="table-wrap"><table id="fundDataTable"></table></div>
         </details>
-        <div><canvas id="fundTrendChart" style="margin:10px 0;max-height:260px"></canvas></div>
+        <div><canvas id="fundTrendChart" class="chart-canvas"></canvas></div>
       </div>
       <p class="footer-note">Published provider performance points are stored in the app and already net of stated fund charges where the source says net of expenses / NAV total return. Cash uses your input rate.</p>
     </section>
@@ -122,7 +124,7 @@
   <div class="grid g2 app-secondary">
     <section class="card panel chart-panel">
       <h2>Probability curve</h2>
-      <div class="input-grid" style="margin-bottom:8px">
+      <div class="input-grid input-grid-gap">
         <div><label>Monte Carlo runs</label><input id="simCount" type="number" value="3000" step="100"></div>
         <div><label>Curve start capital (£)</label><input id="capitalMin" type="number" value="60000" step="1000"></div>
         <div><label>Curve end capital (£)</label><input id="capitalMax" type="number" value="220000" step="1000"></div>
@@ -138,9 +140,26 @@
     </section>
   </div>
 
+  <section class="card panel table-panel">
+    <h2>School fees and academic benchmark tables</h2>
+    <div class="panel-note">Normalized from your raw tables into app row format for MTS, HABS, John Lyon and Orley Farm.</div>
+    <details open>
+      <summary>Fees stage comparison</summary>
+      <div class="table-wrap"><table id="benchmarkFeesTable"></table></div>
+    </details>
+    <details>
+      <summary>GCSE / IGCSE headlines</summary>
+      <div class="table-wrap"><table id="benchmarkGcseTable"></table></div>
+    </details>
+    <details>
+      <summary>A-level headlines</summary>
+      <div class="table-wrap"><table id="benchmarkAlevelTable"></table></div>
+    </details>
+  </section>
+
   <footer class="card app-footer version-panel">
     <button id="versionChip" class="link-btn">Version: loading…</button>
-    <div style="flex:1 1 320px">
+    <div class="footer-flex">
       <div id="versionStatus" class="status warn"></div>
     </div>
   </footer>
@@ -150,8 +169,8 @@
 
 <div id="versionModal" class="modal" aria-hidden="true">
   <div class="modal-card">
-    <div class="row-flex" style="justify-content:space-between;align-items:center">
-      <h3 style="margin:0">Version history</h3>
+    <div class="row-flex row-between-center">
+      <h3 class="no-margin">Version history</h3>
       <button id="closeVersionModal">Close</button>
     </div>
     <div class="panel-note">Choose a version to open that build. History is loaded from the root <code>index.versions.json</code>.</div>
@@ -159,9 +178,9 @@
   </div>
 </div>
 
-<script src="../firebase-config.js"></script>
+<script src="./firebase-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="../js/ui-state.js"></script>
+<script src="./js/ui-state.js"></script>
 
 <script>
 window.FIREBASE_CONFIG = {
@@ -176,7 +195,7 @@ window.FIREBASE_CONFIG = {
 </script>
 
 
-<script type="module" src="../js/app/bootstrap.js"></script>
+<script type="module" src="./js/app/bootstrap.js"></script>
 
 </body>
 </html>

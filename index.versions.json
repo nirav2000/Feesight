@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.4",
-      "label": "v6.3.4 (Current)",
+      "version": "6.3.5",
+      "label": "v6.3.5 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Fixed archived version entrypoints so JS/CSS assets load correctly across all versions under /versions/*",
+        "Added base href to archived index files for reliable relative-path resolution",
+        "Archived previous build as v6.3.4"
+      ]
+    },
+    {
+      "version": "6.3.4",
+      "label": "v6.3.4",
+      "appFile": "versions/6.3.4/index.html",
       "changes": [
         "Restored A-level benchmark table in the academic benchmark section",
         "Fixed archived v6.3.x pages by adding base href so JS/CSS assets resolve correctly",
