@@ -19,3 +19,14 @@
 | Orley Farm | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
 | Whitmore High School | Not published | Not published | Not published | — | — | 74.4% grades 9–4 | — | — | 74.0% grades 9–4 | — | — | 82.0% grades 9–4 |
 | Nower Hill High School | Not published | Not published | Not published | Not available | Not available | Not available | Not available | Not available | Not available | Not available | Not available | Not available |
+
+
+## A-level headlines
+
+| School | 2025 A* | 2025 A*–A | 2024 A* | 2024 A*–A | 2023 A* | 2023 A*–A | 2022 A* | 2022 A*–A |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| HABS | 46% | 79% | 38% | 75% | 48% | 81% | — | — |
+| MTS | 33% | 70% | 36% | 71% | 33% | 70% | 34% | 76% |
+| John Lyon | — | 43% | 12% | 45% | — | — | — | — |
+| Harrow School | ~33% | 65% | 32% | 67% | ~33% | 60% | 40% | — |
+| Pinner High | — | 22% | — | ~25% | — | 30% | — | — |

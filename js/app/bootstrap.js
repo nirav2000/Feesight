@@ -9,7 +9,7 @@ import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis, renderBenchmarkTables } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.3.6';
+const APP_VERSION = '6.3.7';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
@@ -152,6 +152,30 @@ function initPanelLayoutControls(){
   applyPanelLayout();
 }
 
+
+const TOP_TAB_KEY = 'feesight.ui.topTab.v1';
+
+function applyTopTab(tab='all'){
+  const sections = [...document.querySelectorAll('.app-main [data-tab-group]')];
+  sections.forEach(section=>{
+    const visible = tab === 'all' || section.dataset.tabGroup === tab;
+    section.classList.toggle('tab-hidden', !visible);
+  });
+  document.querySelectorAll('#topTabs .tab-btn').forEach(btn=>btn.classList.toggle('active', btn.dataset.tab === tab));
+  localStorage.setItem(TOP_TAB_KEY, tab);
+
+  const first = sections.find(section=>!section.classList.contains('tab-hidden'));
+  if(first) first.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function initTopTabs(){
+  const tabs = document.getElementById('topTabs');
+  if(!tabs) return;
+  tabs.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click', ()=>applyTopTab(btn.dataset.tab || 'all')));
+  const saved = localStorage.getItem(TOP_TAB_KEY) || 'all';
+  applyTopTab(saved);
+}
+
 const unionSchoolNames = ()=> [...new Set([...Object.keys(SCHOOL_DB.schools), ...Object.keys(REMOTE_SCHOOL_INDEX)])].sort((a,b)=>a.localeCompare(b));
 const currentRows = ()=> [...document.querySelectorAll('#feeInputTable tbody tr')].map(tr=>({ year: tr.querySelector('.year').value.trim(), group: tr.querySelector('.group').value.trim(), feeInput: Number(tr.querySelector('.feeInput').value||0) })).filter(r=>r.year && r.group && r.feeInput>0);
 const annualRows = ()=> currentRows().map(r=>({year:r.year, group:normalizeYearGroup(r.group), fee: document.getElementById('feeMode').value === 'termly' ? r.feeInput*3 : r.feeInput }));
@@ -283,6 +307,7 @@ async function bootstrap(){
   if(window.FeesightUIState?.init) window.FeesightUIState.init();
   syncBodyDatasetFromUiState();
   initPanelLayoutControls();
+  initTopTabs();
   document.getElementById('themeSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyTheme?.(e.target.value); syncBodyDatasetFromUiState(); });
   document.getElementById('viewSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyView?.(e.target.value); syncBodyDatasetFromUiState(); });
   const displayModeSelect = document.getElementById('displayModeSelect');

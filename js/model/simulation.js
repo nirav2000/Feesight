@@ -92,11 +92,51 @@ export const GCSE_HEADLINES = [
 
 
 export const ALEVEL_HEADLINES = [
-  { school:'HABS', y2025:'46% A*; 79% A*–A', y2024:'38% A*; 75% A*–A', y2023:'48% A*; 81% A*–A', y2022:'—' },
-  { school:'MTS', y2025:'33% A*; 70% A*–A', y2024:'36% A*; 71% A*–A', y2023:'33% A*; 70% A*–A', y2022:'34% A*; 76% A*–A' },
-  { school:'John Lyon', y2025:'—; 43% A*–A', y2024:'12% A*; 45% A*–A', y2023:'—', y2022:'—' },
-  { school:'Harrow School', y2025:'~33% A*; 65% A*–A', y2024:'32% A*; 67% A*–A', y2023:'~33% A*; 60% A*–A', y2022:'40% A*' },
-  { school:'Pinner High', y2025:'22% A*–A', y2024:'~25% A*–A', y2023:'30% A*–A', y2022:'—' }
+  {
+    school:'HABS',
+    stats:{
+      '2025':{ astar:'46%', astarA:'79%' },
+      '2024':{ astar:'38%', astarA:'75%' },
+      '2023':{ astar:'48%', astarA:'81%' },
+      '2022':{ astar:'—', astarA:'—' }
+    }
+  },
+  {
+    school:'MTS',
+    stats:{
+      '2025':{ astar:'33%', astarA:'70%' },
+      '2024':{ astar:'36%', astarA:'71%' },
+      '2023':{ astar:'33%', astarA:'70%' },
+      '2022':{ astar:'34%', astarA:'76%' }
+    }
+  },
+  {
+    school:'John Lyon',
+    stats:{
+      '2025':{ astar:'—', astarA:'43%' },
+      '2024':{ astar:'12%', astarA:'45%' },
+      '2023':{ astar:'—', astarA:'—' },
+      '2022':{ astar:'—', astarA:'—' }
+    }
+  },
+  {
+    school:'Harrow School',
+    stats:{
+      '2025':{ astar:'~33%', astarA:'65%' },
+      '2024':{ astar:'32%', astarA:'67%' },
+      '2023':{ astar:'~33%', astarA:'60%' },
+      '2022':{ astar:'40%', astarA:'—' }
+    }
+  },
+  {
+    school:'Pinner High',
+    stats:{
+      '2025':{ astar:'—', astarA:'22%' },
+      '2024':{ astar:'—', astarA:'~25%' },
+      '2023':{ astar:'—', astarA:'30%' },
+      '2022':{ astar:'—', astarA:'—' }
+    }
+  }
 ];
 export const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
 

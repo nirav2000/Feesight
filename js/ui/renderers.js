@@ -378,10 +378,55 @@ export function renderBenchmarkTables(){
     BENCHMARK_FEES.map(r=>[r.stage,r.mts,r.mtsInc,r.habs,r.habsInc,r.orley,r.orleyInc,r.johnLyon,r.johnLyonInc])
   );
   renderGcseTable('benchmarkGcseTable', GCSE_HEADLINES, ['2025','2024','2023','2022']);
-  renderSimpleTable('benchmarkAlevelTable',
-    ['School','2025','2024','2023','2022'],
-    ALEVEL_HEADLINES.map(r=>[r.school,r.y2025,r.y2024,r.y2023,r.y2022])
-  );
+  renderAlevelTable('benchmarkAlevelTable', ALEVEL_HEADLINES, ['2025','2024','2023','2022']);
+}
+
+function renderAlevelTable(id, rows, years){
+  const table = document.getElementById(id);
+  if(!table) return;
+
+  const thead = document.createElement('thead');
+  const top = document.createElement('tr');
+  const schoolHeader = document.createElement('th');
+  schoolHeader.rowSpan = 2;
+  schoolHeader.textContent = 'School';
+  top.appendChild(schoolHeader);
+  years.forEach(year=>{
+    const th = document.createElement('th');
+    th.colSpan = 2;
+    th.textContent = year;
+    top.appendChild(th);
+  });
+  thead.appendChild(top);
+
+  const sub = document.createElement('tr');
+  years.forEach(()=>{
+    ['A*','A*–A'].forEach(label=>{
+      const th = document.createElement('th');
+      th.textContent = label;
+      sub.appendChild(th);
+    });
+  });
+  thead.appendChild(sub);
+
+  const tbody = document.createElement('tbody');
+  rows.forEach(row=>{
+    const tr = document.createElement('tr');
+    const school = document.createElement('td');
+    school.textContent = row.school;
+    tr.appendChild(school);
+    years.forEach(year=>{
+      const stats = row.stats?.[year] || {};
+      [stats.astar, stats.astarA].forEach(value=>{
+        const td = document.createElement('td');
+        td.textContent = value || '—';
+        tr.appendChild(td);
+      });
+    });
+    tbody.appendChild(tr);
+  });
+
+  table.replaceChildren(thead, tbody);
 }
 
 function renderGcseTable(id, rows, years){
