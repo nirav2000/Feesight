@@ -40,6 +40,7 @@ export const YEAR_GROUP_AGE_MAP = {
   Y13:'17+'
 };
 export const YEAR_GROUP_ORDER = ['Reception','Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8','Y9','Y10','Y11','Y12','Y13'];
+const UPPER_TO_SENIOR_EXTRA_UPLIFT = 0.30; // +30 percentage points on top of baseline annual increase
 export function formatYearGroupLabel(group){
   const key = String(group || '').trim();
   const age = YEAR_GROUP_AGE_MAP[key];
@@ -64,8 +65,21 @@ export function extendRows(rows, endGroup){
   const endIdx = order.indexOf(endGroup);
   if(startIdx < 0 || endIdx < 0 || endIdx <= startIdx) return {rows:out, avgIncrease:g};
   for(let idx=startIdx+1; idx<=endIdx; idx++){
-    const y0 = Number(prev.year.slice(0,4)) + 1; const y1 = String(y0+1).slice(2); const fee = Math.round(prev.fee * (1+g));
-    prev = {year:`${y0}–${y1}`, group:order[idx], fee, estimated:true}; out.push(prev);
+    const y0 = Number(prev.year.slice(0,4)) + 1;
+    const y1 = String(y0+1).slice(2);
+    const nextGroup = order[idx];
+    const transitionUpliftApplied = prev.group === 'Y8' && nextGroup === 'Y9';
+    const appliedIncrease = g + (transitionUpliftApplied ? UPPER_TO_SENIOR_EXTRA_UPLIFT : 0);
+    const fee = Math.round(prev.fee * (1 + appliedIncrease));
+    prev = {
+      year:`${y0}–${y1}`,
+      group:nextGroup,
+      fee,
+      estimated:true,
+      appliedIncrease,
+      transitionUpliftApplied
+    };
+    out.push(prev);
   }
   return {rows:out, avgIncrease:g};
 }

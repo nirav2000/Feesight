@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.2.7",
-      "label": "v6.2.7 (Current)",
+      "version": "6.2.8",
+      "label": "v6.2.8 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Applied +30.0% upper-to-senior uplift at Y8→Y9 on top of baseline annual increase",
+        "Updated extended fee basis text and metadata to show transition uplift assumptions",
+        "Kept Year Group + age notation and total/average summary rows in planning tables"
+      ]
+    },
+    {
+      "version": "6.2.7",
+      "label": "v6.2.7",
+      "appFile": "versions/6.2.7/index.html",
       "changes": [
         "Added Year Group + age notation throughout key planning outputs",
         "Extended fee projection endpoint to Y13 with GCSE and A-Level dropdown labels",

@@ -185,10 +185,16 @@ export function renderExtendedTable(baseRows, extRows, avgInc, displayMode='tabl
   const meta = document.getElementById('extendedMeta');
   meta.replaceChildren();
   const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = `Average fee increase used for extensions: ${pct(avgInc*100)}`; meta.appendChild(pill);
+  if(extRows.some(r=>r?.transitionUpliftApplied)){
+    const upliftPill = document.createElement('span');
+    upliftPill.className = 'pill';
+    upliftPill.textContent = 'Upper→Senior transition uplift: +30.0% applied at Y8→Y9';
+    meta.appendChild(upliftPill);
+  }
   if(displayMode === 'cards'){
     renderCardGrid('extendedTable', extRows.map((r,i)=>({
       title: `${r.year} · ${formatYearGroupLabel(r.group)}`,
-      rows: [['Annual fee', money(r.fee)], ['Basis', i<baseRows.length?'Entered fee':`Estimated using average increase ${pct(avgInc*100)}`]]
+      rows: [['Annual fee', money(r.fee)], ['Basis', i<baseRows.length?'Entered fee':basisLabel(r, avgInc)]]
     })));
     return;
   }
@@ -198,7 +204,7 @@ export function renderExtendedTable(baseRows, extRows, avgInc, displayMode='tabl
   ['Academic year','Year group','Annual fee','Basis'].forEach(text=>{ const th = document.createElement('th'); th.textContent = text; trHead.appendChild(th); });
   thead.appendChild(trHead);
   const tbody = document.createElement('tbody');
-  extRows.forEach((r,i)=>{ const tr = document.createElement('tr'); [r.year, formatYearGroupLabel(r.group), money(r.fee), i<baseRows.length?'Entered fee':`Estimated using average increase ${pct(avgInc*100)}`].forEach(text=>{ const td = document.createElement('td'); td.textContent = text; tr.appendChild(td); }); tbody.appendChild(tr); });
+  extRows.forEach((r,i)=>{ const tr = document.createElement('tr'); [r.year, formatYearGroupLabel(r.group), money(r.fee), i<baseRows.length?'Entered fee':basisLabel(r, avgInc)].forEach(text=>{ const td = document.createElement('td'); td.textContent = text; tr.appendChild(td); }); tbody.appendChild(tr); });
   const totalFees = extRows.reduce((sum, row)=>sum + (Number(row.fee) || 0), 0);
   const avgFee = extRows.length ? totalFees / extRows.length : 0;
   const totals = document.createElement('tr');
@@ -220,6 +226,13 @@ export function renderExtendedTable(baseRows, extRows, avgInc, displayMode='tabl
   totals.appendChild(avgCell);
   tbody.appendChild(totals);
   table.replaceChildren(thead, tbody);
+}
+
+function basisLabel(row, avgInc){
+  if(row?.transitionUpliftApplied){
+    return `Estimated using average increase ${pct(avgInc*100)} plus +30.0% upper-to-senior uplift`;
+  }
+  return `Estimated using average increase ${pct(avgInc*100)}`;
 }
 
 export function renderCurve(points, fund, displayMode='table'){
