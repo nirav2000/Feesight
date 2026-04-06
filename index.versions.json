@@ -3,9 +3,18 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.15",
-      "label": "v6.3.15 (Current)",
+      "version": "6.3.16",
+      "label": "v6.3.16 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Clarified in-app benchmark note that fees are annualised (termly \u00d7 3)",
+        "Archived previous build as v6.3.15"
+      ]
+    },
+    {
+      "version": "6.3.15",
+      "label": "v6.3.15",
+      "appFile": "versions/6.3.15/index.html",
       "changes": [
         "Converted benchmark fee rows from termly to annual (termly \u00d7 3)",
         "Updated weighted totals to annual amounts",
