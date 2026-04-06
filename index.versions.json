@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.1",
-      "label": "v6.3.1 (Current)",
+      "version": "6.3.2",
+      "label": "v6.3.2 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Removed A-level benchmark section to match requested scope (4 schools + GCSE table)",
+        "Kept normalized 4-school row-format loader defaults sourced from the school_full dataset",
+        "Archived previous build as v6.3.1"
+      ]
+    },
+    {
+      "version": "6.3.1",
+      "label": "v6.3.1",
+      "appFile": "versions/6.3.1/index.html",
       "changes": [
         "Normalized raw comparator fee tables into row-format school datasets for MTS, HABS, John Lyon, and Orley Farm",
         "Seeded school loader defaults with all four schools so they are immediately selectable",
