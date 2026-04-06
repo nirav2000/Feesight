@@ -151,3 +151,5 @@ body[data-view="simulator"] .insights-panel .kpi:nth-child(-n+3){background:colo
 
 .data-links{font-size:12px;color:var(--text-2)}
 .data-links a{color:var(--accent)}
+
+.editable-cell{outline:1px dashed var(--accent); background:color-mix(in srgb,var(--surface-2) 88%, var(--accent));}

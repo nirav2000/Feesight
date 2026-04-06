@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="../../">
 <title>Feesight - School Fees Analyser</title>
 
 <link rel="stylesheet" href="./styles/base.css">
@@ -160,14 +161,19 @@
       <summary>A-level headlines</summary>
       <div class="table-wrap"><table id="benchmarkAlevelTable"></table></div>
     </details>
-    <div class="toolbar">
-      <button id="toggleBenchmarkEdit" type="button">Enable table editing</button>
-      <button id="saveBenchmarkEdits" type="button">Save table edits</button>
-      <button id="addFeesRow" type="button">Add fees row</button>
-      <button id="addGcseRow" type="button">Add GCSE row</button>
-      <button id="addAlevelRow" type="button">Add A-level row</button>
-    </div>
-    <div id="benchmarkEditorStatus" class="status warn"></div>
+    <details>
+      <summary>Edit benchmark datasets (JSON)</summary>
+      <div class="grid g2">
+        <div><label>Fees table rows JSON</label><textarea id="feesJsonEditor" class="mono" rows="8"></textarea></div>
+        <div><label>GCSE table rows JSON</label><textarea id="gcseJsonEditor" class="mono" rows="8"></textarea></div>
+      </div>
+      <div><label>A-level table rows JSON</label><textarea id="alevelJsonEditor" class="mono" rows="8"></textarea></div>
+      <div class="toolbar">
+        <button id="applyBenchmarkJson" type="button">Apply benchmark JSON</button>
+        <button id="resetBenchmarkJson" type="button">Reset benchmark defaults</button>
+      </div>
+      <div id="benchmarkEditorStatus" class="status warn"></div>
+    </details>
   </section>
 
   <footer class="card app-footer version-panel">

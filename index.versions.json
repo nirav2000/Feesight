@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.8",
-      "label": "v6.3.8 (Current)",
+      "version": "6.3.9",
+      "label": "v6.3.9 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Replaced separate JSON benchmark panels with in-situ table editing (click cell, edit, save)",
+        "Added add-row controls per benchmark table (fees/GCSE/A-level)",
+        "Archived previous build as v6.3.8"
+      ]
+    },
+    {
+      "version": "6.3.8",
+      "label": "v6.3.8",
+      "appFile": "versions/6.3.8/index.html",
       "changes": [
         "Added benchmark JSON editors (fees/GCSE/A-level) for amend/insert workflows",
         "Added Firestore save/load for panel layout, top-tab selection, display mode and benchmark datasets",

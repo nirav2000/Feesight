@@ -9,7 +9,7 @@ import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis, renderBenchmarkTables } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.3.8';
+const APP_VERSION = '6.3.9';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
@@ -193,39 +193,75 @@ function saveBenchmarkData(){
   localStorage.setItem(BENCHMARK_DATA_KEY, JSON.stringify(BENCHMARK_DATA));
   saveUserPrefsRemote();
 }
-function syncBenchmarkEditors(){
-  const feesEl = document.getElementById('feesJsonEditor');
-  const gcseEl = document.getElementById('gcseJsonEditor');
-  const alevelEl = document.getElementById('alevelJsonEditor');
-  if(feesEl) feesEl.value = JSON.stringify(BENCHMARK_DATA.fees, null, 2);
-  if(gcseEl) gcseEl.value = JSON.stringify(BENCHMARK_DATA.gcse, null, 2);
-  if(alevelEl) alevelEl.value = JSON.stringify(BENCHMARK_DATA.alevel, null, 2);
+
+let benchmarkEditMode = false;
+function setBenchmarkCellsEditable(enabled){
+  ['benchmarkFeesTable','benchmarkGcseTable','benchmarkAlevelTable'].forEach(id=>{
+    document.querySelectorAll(`#${id} tbody td`).forEach(td=>{ td.contentEditable = enabled ? 'true' : 'false'; td.classList.toggle('editable-cell', enabled); });
+  });
+  const toggleBtn = document.getElementById('toggleBenchmarkEdit');
+  if(toggleBtn) toggleBtn.textContent = enabled ? 'Disable table editing' : 'Enable table editing';
 }
-function initBenchmarkEditors(){
+
+function addEmptyRow(tableId){
+  const table = document.getElementById(tableId);
+  if(!table) return;
+  const colCount = table.querySelector('thead tr:last-child')?.children.length || table.querySelector('thead tr:first-child')?.children.length || 0;
+  const tbody = table.querySelector('tbody');
+  if(!tbody || !colCount) return;
+  const tr = document.createElement('tr');
+  for(let i=0;i<colCount;i++){
+    const td = document.createElement('td');
+    td.textContent = i===0 ? 'New School' : '—';
+    td.contentEditable = benchmarkEditMode ? 'true' : 'false';
+    td.classList.toggle('editable-cell', benchmarkEditMode);
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+}
+
+function collectBenchmarkDataFromTables(){
+  const fees = [...document.querySelectorAll('#benchmarkFeesTable tbody tr')].map(tr=>{ const tds=[...tr.children].map(td=>td.textContent.trim()); return { stage:tds[0]||'', mts:tds[1]||'', mtsInc:tds[2]||'', habs:tds[3]||'', habsInc:tds[4]||'', orley:tds[5]||'', orleyInc:tds[6]||'', johnLyon:tds[7]||'', johnLyonInc:tds[8]||'' }; }).filter(r=>r.stage);
+
+  const yearsGcse = ['2025','2024','2023','2022'];
+  const gcse = [...document.querySelectorAll('#benchmarkGcseTable tbody tr')].map(tr=>{
+    const tds=[...tr.children].map(td=>td.textContent.trim());
+    const out = { school:tds[0]||'Untitled', stats:{} };
+    yearsGcse.forEach((y,idx)=>{ const base = 1 + idx*3; out.stats[y] = { grade9: tds[base] || '—', grade98: tds[base+1] || '—', grade97: tds[base+2] || '—' }; });
+    return out;
+  }).filter(r=>r.school);
+
+  const yearsA = ['2025','2024','2023','2022'];
+  const alevel = [...document.querySelectorAll('#benchmarkAlevelTable tbody tr')].map(tr=>{
+    const tds=[...tr.children].map(td=>td.textContent.trim());
+    const out = { school:tds[0]||'Untitled', stats:{} };
+    yearsA.forEach((y,idx)=>{ const base = 1 + idx*2; out.stats[y] = { astar: tds[base] || '—', astarA: tds[base+1] || '—' }; });
+    return out;
+  }).filter(r=>r.school);
+
+  return { fees, gcse, alevel };
+}
+
+function initBenchmarkTableEditing(){
   loadBenchmarkData();
-  syncBenchmarkEditors();
   const statusEl = document.getElementById('benchmarkEditorStatus');
   const setEditorStatus = (msg, cls='ok')=>{ if(statusEl){ statusEl.className = `status ${cls}`; statusEl.textContent = msg || ''; }};
-  document.getElementById('applyBenchmarkJson')?.addEventListener('click', ()=>{
-    try{
-      const fees = JSON.parse(document.getElementById('feesJsonEditor').value || '[]');
-      const gcse = JSON.parse(document.getElementById('gcseJsonEditor').value || '[]');
-      const alevel = JSON.parse(document.getElementById('alevelJsonEditor').value || '[]');
-      if(!Array.isArray(fees) || !Array.isArray(gcse) || !Array.isArray(alevel)) throw new Error('Each JSON block must be an array.');
-      BENCHMARK_DATA = { fees, gcse, alevel };
-      saveBenchmarkData();
-      build();
-      saveUserPrefsRemote();
-      setEditorStatus('Benchmark datasets updated.', 'ok');
-    }catch(err){ setEditorStatus(`Invalid JSON: ${err.message}`, 'warn'); }
+
+  document.getElementById('toggleBenchmarkEdit')?.addEventListener('click', ()=>{
+    benchmarkEditMode = !benchmarkEditMode;
+    setBenchmarkCellsEditable(benchmarkEditMode);
+    setEditorStatus(benchmarkEditMode ? 'Table edit mode enabled.' : 'Table edit mode disabled.', 'ok');
   });
-  document.getElementById('resetBenchmarkJson')?.addEventListener('click', ()=>{
-    BENCHMARK_DATA = defaultBenchmarkData();
+  document.getElementById('saveBenchmarkEdits')?.addEventListener('click', ()=>{
+    BENCHMARK_DATA = collectBenchmarkDataFromTables();
     saveBenchmarkData();
-    syncBenchmarkEditors();
     build();
-    setEditorStatus('Benchmark datasets reset to defaults.', 'ok');
+    benchmarkEditMode = false;
+    setEditorStatus('Benchmark table edits saved.', 'ok');
   });
+  document.getElementById('addFeesRow')?.addEventListener('click', ()=>addEmptyRow('benchmarkFeesTable'));
+  document.getElementById('addGcseRow')?.addEventListener('click', ()=>addEmptyRow('benchmarkGcseTable'));
+  document.getElementById('addAlevelRow')?.addEventListener('click', ()=>addEmptyRow('benchmarkAlevelTable'));
 }
 
 async function saveUserPrefsRemote(){
@@ -256,7 +292,6 @@ async function loadUserPrefsRemote(){
     if(data.benchmarkData && Array.isArray(data.benchmarkData.fees) && Array.isArray(data.benchmarkData.gcse) && Array.isArray(data.benchmarkData.alevel)){
       BENCHMARK_DATA = data.benchmarkData;
       localStorage.setItem(BENCHMARK_DATA_KEY, JSON.stringify(BENCHMARK_DATA));
-      syncBenchmarkEditors();
     }
   }catch(_err){ /* non-blocking */ }
 }
@@ -393,7 +428,7 @@ async function bootstrap(){
   syncBodyDatasetFromUiState();
   initPanelLayoutControls();
   initTopTabs();
-  initBenchmarkEditors();
+  initBenchmarkTableEditing();
   document.getElementById('themeSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyTheme?.(e.target.value); syncBodyDatasetFromUiState(); });
   document.getElementById('viewSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyView?.(e.target.value); syncBodyDatasetFromUiState(); });
   const displayModeSelect = document.getElementById('displayModeSelect');
