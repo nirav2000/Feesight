@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.10",
-      "label": "v6.3.10 (Current)",
+      "version": "6.3.11",
+      "label": "v6.3.11 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Corrected stage comparison totals using weighted year counts rather than single-year sums",
+        "Updated schools_full.md totals to match weighted methodology",
+        "Archived previous build as v6.3.10"
+      ]
+    },
+    {
+      "version": "6.3.10",
+      "label": "v6.3.10",
+      "appFile": "versions/6.3.10/index.html",
       "changes": [
         "Cleaned benchmark table display by rendering N/A, Not published, Not available, and \u2014 as blank cells",
         "Archived previous build as v6.3.9"

@@ -9,7 +9,7 @@ import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis, renderBenchmarkTables } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.3.10';
+const APP_VERSION = '6.3.11';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
