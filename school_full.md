@@ -17,3 +17,5 @@
 | MTS | 43% | 71% | 88% | 39% | 70% | 87.7% | — | 68.3% | 86.2% | — | 77.8% | 93.1% |
 | John Lyon | 17% | 41% | 62% | 20% | 43% | 64% | Not found | Not found | Not found | Not found | Not found | Not found |
 | Orley Farm | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
+| Whitmore High School | Not published | Not published | Not published | — | — | 74.4% grades 9–4 | — | — | 74.0% grades 9–4 | — | — | 82.0% grades 9–4 |
+| Nower Hill High School | Not published | Not published | Not published | Not available | Not available | Not available | Not available | Not available | Not available | Not available | Not available | Not available |

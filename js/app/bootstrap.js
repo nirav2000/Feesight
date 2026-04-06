@@ -9,7 +9,7 @@ import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis, renderBenchmarkTables } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.3.5';
+const APP_VERSION = '6.3.6';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
@@ -91,6 +91,65 @@ function updateUserMenuAvatar(user){
     const label = (user.displayName || user.email || 'U').trim().charAt(0).toUpperCase();
     btn.textContent = label || 'U';
   } else btn.textContent = '👤';
+}
+
+
+const PANEL_LAYOUT_KEY = 'feesight.ui.panelLayout.v1';
+
+function getPanelKey(panel, idx){
+  return panel.id || panel.querySelector('h2')?.textContent?.trim() || `panel-${idx}`;
+}
+
+function savePanelLayout(){
+  const main = document.querySelector('.app-main');
+  if(!main) return;
+  const order = [...main.querySelectorAll(':scope > .panel, :scope > .grid.g2, :scope > footer.panel, :scope > section.panel')]
+    .filter(el=>el.classList.contains('panel') || el.classList.contains('app-secondary'))
+    .map((el, idx)=>({ key: el.dataset.panelKey || getPanelKey(el, idx), full: el.classList.contains('panel-fullwidth') }));
+  localStorage.setItem(PANEL_LAYOUT_KEY, JSON.stringify(order));
+}
+
+function applyPanelLayout(){
+  const main = document.querySelector('.app-main');
+  if(!main) return;
+  let saved;
+  try{ saved = JSON.parse(localStorage.getItem(PANEL_LAYOUT_KEY) || '[]'); }catch{ saved = []; }
+  if(!Array.isArray(saved) || !saved.length) return;
+  const children = [...main.children];
+  const map = new Map(children.map((el, idx)=>[el.dataset.panelKey || getPanelKey(el, idx), el]));
+  saved.forEach(item=>{
+    const el = map.get(item?.key);
+    if(!el) return;
+    main.appendChild(el);
+    if(item?.full) el.classList.add('panel-fullwidth');
+  });
+}
+
+function initPanelLayoutControls(){
+  const main = document.querySelector('.app-main');
+  if(!main) return;
+  [...main.children].forEach((panel, idx)=>{
+    panel.dataset.panelKey = panel.dataset.panelKey || getPanelKey(panel, idx);
+    const host = panel.querySelector('.panel-head') || panel;
+    if(host.querySelector('.panel-layout-actions')) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'panel-layout-actions';
+    const up = document.createElement('button');
+    up.type = 'button'; up.className = 'small'; up.textContent = '↑'; up.title = 'Move up';
+    const down = document.createElement('button');
+    down.type = 'button'; down.className = 'small'; down.textContent = '↓'; down.title = 'Move down';
+    const wide = document.createElement('button');
+    wide.type = 'button'; wide.className = 'small'; wide.textContent = '100%'; wide.title = 'Toggle full width';
+
+    up.addEventListener('click', ()=>{ const prev = panel.previousElementSibling; if(prev){ panel.parentElement.insertBefore(panel, prev); savePanelLayout(); } });
+    down.addEventListener('click', ()=>{ const next = panel.nextElementSibling; if(next){ panel.parentElement.insertBefore(next, panel); savePanelLayout(); } });
+    wide.addEventListener('click', ()=>{ panel.classList.toggle('panel-fullwidth'); savePanelLayout(); });
+
+    wrap.append(up, down, wide);
+    host.appendChild(wrap);
+  });
+  applyPanelLayout();
 }
 
 const unionSchoolNames = ()=> [...new Set([...Object.keys(SCHOOL_DB.schools), ...Object.keys(REMOTE_SCHOOL_INDEX)])].sort((a,b)=>a.localeCompare(b));
@@ -223,6 +282,7 @@ async function bootstrap(){
   if(versionChip) versionChip.textContent = `Version: ${APP_VERSION}`;
   if(window.FeesightUIState?.init) window.FeesightUIState.init();
   syncBodyDatasetFromUiState();
+  initPanelLayoutControls();
   document.getElementById('themeSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyTheme?.(e.target.value); syncBodyDatasetFromUiState(); });
   document.getElementById('viewSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyView?.(e.target.value); syncBodyDatasetFromUiState(); });
   const displayModeSelect = document.getElementById('displayModeSelect');

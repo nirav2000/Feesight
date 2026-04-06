@@ -134,3 +134,10 @@ body[data-view="simulator"] .insights-panel .kpi:nth-child(-n+3){background:colo
   .toolbar{grid-template-columns:1fr}
   .app-footer{align-items:flex-start}
 }
+
+
+.panel-layout-actions{ display:flex; gap:6px; margin-left:auto; }
+.panel-layout-actions .small{ padding:2px 8px; font-size:12px; }
+.app-main > .panel.panel-fullwidth,
+.app-main > .app-secondary.panel-fullwidth,
+.app-main > .panel-fullwidth{ grid-column:1 / -1 !important; width:100%; }

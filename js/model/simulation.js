@@ -67,6 +67,24 @@ export const GCSE_HEADLINES = [
       '2023':{ grade9:'N/A', grade98:'N/A', grade97:'N/A' },
       '2022':{ grade9:'N/A', grade98:'N/A', grade97:'N/A' }
     }
+  },
+  {
+    school:'Whitmore High School',
+    stats:{
+      '2025':{ grade9:'Not published', grade98:'Not published', grade97:'Not published' },
+      '2024':{ grade9:'—', grade98:'—', grade97:'74.4% grades 9–4' },
+      '2023':{ grade9:'—', grade98:'—', grade97:'74.0% grades 9–4' },
+      '2022':{ grade9:'—', grade98:'—', grade97:'82.0% grades 9–4' }
+    }
+  },
+  {
+    school:'Nower Hill High School',
+    stats:{
+      '2025':{ grade9:'Not published', grade98:'Not published', grade97:'Not published' },
+      '2024':{ grade9:'Not available', grade98:'Not available', grade97:'Not available' },
+      '2023':{ grade9:'Not available', grade98:'Not available', grade97:'Not available' },
+      '2022':{ grade9:'Not available', grade98:'Not available', grade97:'Not available' }
+    }
   }
 ];
 

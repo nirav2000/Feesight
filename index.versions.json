@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.5",
-      "label": "v6.3.5 (Current)",
+      "version": "6.3.6",
+      "label": "v6.3.6 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Added move controls (up/down) and 100% width toggle on panels",
+        "Restored Whitmore and Nower Hill rows in GCSE benchmark data",
+        "Archived previous build as v6.3.5"
+      ]
+    },
+    {
+      "version": "6.3.5",
+      "label": "v6.3.5",
+      "appFile": "versions/6.3.5/index.html",
       "changes": [
         "Fixed archived version entrypoints so JS/CSS assets load correctly across all versions under /versions/*",
         "Added base href to archived index files for reliable relative-path resolution",
