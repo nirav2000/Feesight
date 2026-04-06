@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.7",
-      "label": "v6.3.7 (Current)",
+      "version": "6.3.8",
+      "label": "v6.3.8 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Added benchmark JSON editors (fees/GCSE/A-level) for amend/insert workflows",
+        "Added Firestore save/load for panel layout, top-tab selection, display mode and benchmark datasets",
+        "Pinned full-width sticky footer version bar with source links"
+      ]
+    },
+    {
+      "version": "6.3.7",
+      "label": "v6.3.7",
+      "appFile": "versions/6.3.7/index.html",
       "changes": [
         "Split A-level benchmark table into per-year A* and A*\u2013A columns",
         "Added top tabs bar (All/Inputs/Results/Benchmarks) to reduce scrolling and filter/scroll sections",

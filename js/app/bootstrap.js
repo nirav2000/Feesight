@@ -3,19 +3,23 @@
  * Boundaries: wire modules, DOM events, state orchestration, and body dataset syncing.
  */
 
-import { ORLEY_ROWS, FUND_LIBRARY, deepCopy, avg, getFundData, annualReturnsForRows, extendRows, updatedComparison, summaryFromComparison, termStructure, requiredCapitalForExactSequence, runDecum, probabilityCurve, formatYearGroupLabel, normalizeYearGroup } from '../model/simulation.js';
+import { ORLEY_ROWS, FUND_LIBRARY, BENCHMARK_FEES, GCSE_HEADLINES, ALEVEL_HEADLINES, deepCopy, avg, getFundData, annualReturnsForRows, extendRows, updatedComparison, summaryFromComparison, termStructure, requiredCapitalForExactSequence, runDecum, probabilityCurve, formatYearGroupLabel, normalizeYearGroup } from '../model/simulation.js';
 import { loadDb, saveDb, saveCurrentSchoolRemote, refreshRemoteSchools, normalizeSchoolName, loadLatestRevisionRows } from '../data/schools-store.js';
 import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis, renderBenchmarkTables } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.3.7';
+const APP_VERSION = '6.3.8';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
 let saveTimer = null; let authInFlight = false; let pendingRemoteSync = false;
 let remoteSyncBackoffMs = 5000;
 let nextRemoteSyncAt = 0;
+const BENCHMARK_DATA_KEY = 'feesight.ui.benchmarkData.v1';
+
+const defaultBenchmarkData = ()=>({ fees: deepCopy(BENCHMARK_FEES), gcse: deepCopy(GCSE_HEADLINES), alevel: deepCopy(ALEVEL_HEADLINES) });
+let BENCHMARK_DATA = defaultBenchmarkData();
 
 function debugLog(level, message, data){ const el = document.getElementById('debugConsole'); const ts = new Date().toISOString().replace('T',' ').slice(0,19); const line = document.createElement('div'); line.className = 'line'; line.textContent = `[${ts}] [${level}] ${message}${data ? ` | ${typeof data === 'string' ? data : JSON.stringify(data)}` : ''}`; if(el){ el.prepend(line); while(el.childNodes.length > 100) el.removeChild(el.lastChild); } }
 const setStatus = (msg, cls)=>{ const el=document.getElementById('saveStatus'); if(el){ el.className=`status ${cls}`; el.textContent=msg || ''; } };
@@ -107,6 +111,7 @@ function savePanelLayout(){
     .filter(el=>el.classList.contains('panel') || el.classList.contains('app-secondary'))
     .map((el, idx)=>({ key: el.dataset.panelKey || getPanelKey(el, idx), full: el.classList.contains('panel-fullwidth') }));
   localStorage.setItem(PANEL_LAYOUT_KEY, JSON.stringify(order));
+  saveUserPrefsRemote();
 }
 
 function applyPanelLayout(){
@@ -163,6 +168,7 @@ function applyTopTab(tab='all'){
   });
   document.querySelectorAll('#topTabs .tab-btn').forEach(btn=>btn.classList.toggle('active', btn.dataset.tab === tab));
   localStorage.setItem(TOP_TAB_KEY, tab);
+  saveUserPrefsRemote();
 
   const first = sections.find(section=>!section.classList.contains('tab-hidden'));
   if(first) first.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -174,6 +180,85 @@ function initTopTabs(){
   tabs.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click', ()=>applyTopTab(btn.dataset.tab || 'all')));
   const saved = localStorage.getItem(TOP_TAB_KEY) || 'all';
   applyTopTab(saved);
+}
+
+
+function loadBenchmarkData(){
+  try{
+    const parsed = JSON.parse(localStorage.getItem(BENCHMARK_DATA_KEY) || 'null');
+    if(parsed && Array.isArray(parsed.fees) && Array.isArray(parsed.gcse) && Array.isArray(parsed.alevel)) BENCHMARK_DATA = parsed;
+  }catch(_err){ BENCHMARK_DATA = defaultBenchmarkData(); }
+}
+function saveBenchmarkData(){
+  localStorage.setItem(BENCHMARK_DATA_KEY, JSON.stringify(BENCHMARK_DATA));
+  saveUserPrefsRemote();
+}
+function syncBenchmarkEditors(){
+  const feesEl = document.getElementById('feesJsonEditor');
+  const gcseEl = document.getElementById('gcseJsonEditor');
+  const alevelEl = document.getElementById('alevelJsonEditor');
+  if(feesEl) feesEl.value = JSON.stringify(BENCHMARK_DATA.fees, null, 2);
+  if(gcseEl) gcseEl.value = JSON.stringify(BENCHMARK_DATA.gcse, null, 2);
+  if(alevelEl) alevelEl.value = JSON.stringify(BENCHMARK_DATA.alevel, null, 2);
+}
+function initBenchmarkEditors(){
+  loadBenchmarkData();
+  syncBenchmarkEditors();
+  const statusEl = document.getElementById('benchmarkEditorStatus');
+  const setEditorStatus = (msg, cls='ok')=>{ if(statusEl){ statusEl.className = `status ${cls}`; statusEl.textContent = msg || ''; }};
+  document.getElementById('applyBenchmarkJson')?.addEventListener('click', ()=>{
+    try{
+      const fees = JSON.parse(document.getElementById('feesJsonEditor').value || '[]');
+      const gcse = JSON.parse(document.getElementById('gcseJsonEditor').value || '[]');
+      const alevel = JSON.parse(document.getElementById('alevelJsonEditor').value || '[]');
+      if(!Array.isArray(fees) || !Array.isArray(gcse) || !Array.isArray(alevel)) throw new Error('Each JSON block must be an array.');
+      BENCHMARK_DATA = { fees, gcse, alevel };
+      saveBenchmarkData();
+      build();
+      saveUserPrefsRemote();
+      setEditorStatus('Benchmark datasets updated.', 'ok');
+    }catch(err){ setEditorStatus(`Invalid JSON: ${err.message}`, 'warn'); }
+  });
+  document.getElementById('resetBenchmarkJson')?.addEventListener('click', ()=>{
+    BENCHMARK_DATA = defaultBenchmarkData();
+    saveBenchmarkData();
+    syncBenchmarkEditors();
+    build();
+    setEditorStatus('Benchmark datasets reset to defaults.', 'ok');
+  });
+}
+
+async function saveUserPrefsRemote(){
+  if(!firebaseReady || !FIRESTORE || !currentUser) return;
+  try{
+    const panelLayout = localStorage.getItem(PANEL_LAYOUT_KEY);
+    const topTab = localStorage.getItem(TOP_TAB_KEY);
+    const displayMode = localStorage.getItem('feesight.ui.displayMode');
+    await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db, 'users', currentUser.uid, 'prefs', 'layout'), {
+      panelLayout: panelLayout ? JSON.parse(panelLayout) : [],
+      topTab: topTab || 'all',
+      displayMode: displayMode || 'table',
+      benchmarkData: BENCHMARK_DATA,
+      updatedAt: new Date().toISOString()
+    }, { merge:true });
+  }catch(_err){ /* non-blocking */ }
+}
+
+async function loadUserPrefsRemote(){
+  if(!firebaseReady || !FIRESTORE || !currentUser || !FIRESTORE.getDoc) return;
+  try{
+    const snap = await FIRESTORE.getDoc(FIRESTORE.doc(FIRESTORE.db, 'users', currentUser.uid, 'prefs', 'layout'));
+    const data = snap?.data?.() || null;
+    if(!data) return;
+    if(Array.isArray(data.panelLayout)) localStorage.setItem(PANEL_LAYOUT_KEY, JSON.stringify(data.panelLayout));
+    if(typeof data.topTab === 'string') localStorage.setItem(TOP_TAB_KEY, data.topTab);
+    if(typeof data.displayMode === 'string') localStorage.setItem('feesight.ui.displayMode', data.displayMode);
+    if(data.benchmarkData && Array.isArray(data.benchmarkData.fees) && Array.isArray(data.benchmarkData.gcse) && Array.isArray(data.benchmarkData.alevel)){
+      BENCHMARK_DATA = data.benchmarkData;
+      localStorage.setItem(BENCHMARK_DATA_KEY, JSON.stringify(BENCHMARK_DATA));
+      syncBenchmarkEditors();
+    }
+  }catch(_err){ /* non-blocking */ }
 }
 
 const unionSchoolNames = ()=> [...new Set([...Object.keys(SCHOOL_DB.schools), ...Object.keys(REMOTE_SCHOOL_INDEX)])].sort((a,b)=>a.localeCompare(b));
@@ -298,7 +383,7 @@ function build(){
   const src = annualReturnsForRows(fund, Math.max(1, remainingRows.length), cashRate); const sorted = src.slice().sort((a,b)=>a-b), reversed=src.slice().sort((a,b)=>b-a), minRet=Math.min(...src), avRet=avg(src);
   const stress = [{name:'Best case actual order', seq: exactAnnualReturns, returnRef:`Actual stored order · avg ${pct(avRet)}`},{name:'Strongest returns first', seq: reversed.slice(0,remainingRows.length), returnRef:'Stored returns reordered best first'},{name:'Average return repeated', seq: remainingRows.map(()=>avRet), returnRef:`Flat ${pct(avRet)}`},{name:'Weakest returns first', seq: sorted.slice(0,remainingRows.length), returnRef:'Stored returns reordered worst first'},{name:'Severe stress', seq: remainingRows.map(()=>minRet), returnRef:`Repeat worst stored return ${pct(minRet)}`}] .map(s=>{ const terms=termStructure(remainingRows, 3, s.seq); const req=requiredCapitalForExactSequence(terms); const end=runDecum(req, terms).at(-1)?.end||0; return {...s, requiredStart:req, endBalance:end, outcome:req<=remainingFees?'Capital-efficient':'Needs more than fees upfront'}; });
   renderStressTable(stress, remainingFees, fund, displayMode);
-  renderBenchmarkTables();
+  renderBenchmarkTables(BENCHMARK_DATA);
 }
 
 async function bootstrap(){
@@ -308,6 +393,7 @@ async function bootstrap(){
   syncBodyDatasetFromUiState();
   initPanelLayoutControls();
   initTopTabs();
+  initBenchmarkEditors();
   document.getElementById('themeSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyTheme?.(e.target.value); syncBodyDatasetFromUiState(); });
   document.getElementById('viewSelect').addEventListener('change', e=>{ window.FeesightUIState?.applyView?.(e.target.value); syncBodyDatasetFromUiState(); });
   const displayModeSelect = document.getElementById('displayModeSelect');
@@ -316,6 +402,7 @@ async function bootstrap(){
       window.FeesightUIState?.applyDisplayMode?.(e.target.value);
       syncBodyDatasetFromUiState();
       build();
+      saveUserPrefsRemote();
     });
   }
 
@@ -359,7 +446,7 @@ async function bootstrap(){
   document.getElementById('versionModal').addEventListener('click', e=>{ if(e.target.id==='versionModal') e.currentTarget.classList.remove('open'); });
   setInterval(()=>{ if(currentUser && pendingRemoteSync) pushRemoteSchool(); }, 10000);
 
-  const state = await initFirebaseAuth({ debugLog, onStatus:setStatus, onAuthStatus:setAuthStatus, onReady:(a,f)=>{AUTH=a; FIRESTORE=f; firebaseReady=true;}, onUserChanged: async (user)=>{ currentUser = user; updateUserMenuAvatar(currentUser); if(currentUser){ setAuthStatus(`Signed in as ${currentUser.displayName || currentUser.email || currentUser.uid}. Firestore sync is active.`, 'ok'); await refreshRemoteSchools({firebaseReady,FIRESTORE,currentUser,SCHOOL_DB,setRemoteIndex:v=>{REMOTE_SCHOOL_INDEX=v;},onStatus:setStatus,onWarn:m=>setStatus(m,'warn')}); rebuildSchoolPickers(); await pushRemoteSchool(); } else { setAuthStatus('Guest mode. Local saving works; Firestore sync will use anonymous auth unless you sign in with Google.', 'warn'); } } });
+  const state = await initFirebaseAuth({ debugLog, onStatus:setStatus, onAuthStatus:setAuthStatus, onReady:(a,f)=>{AUTH=a; FIRESTORE=f; firebaseReady=true;}, onUserChanged: async (user)=>{ currentUser = user; updateUserMenuAvatar(currentUser); if(currentUser){ setAuthStatus(`Signed in as ${currentUser.displayName || currentUser.email || currentUser.uid}. Firestore sync is active.`, 'ok'); await loadUserPrefsRemote(); syncBodyDatasetFromUiState(); applyPanelLayout(); applyTopTab(localStorage.getItem(TOP_TAB_KEY) || 'all'); await refreshRemoteSchools({firebaseReady,FIRESTORE,currentUser,SCHOOL_DB,setRemoteIndex:v=>{REMOTE_SCHOOL_INDEX=v;},onStatus:setStatus,onWarn:m=>setStatus(m,'warn')}); rebuildSchoolPickers(); build(); await pushRemoteSchool(); } else { setAuthStatus('Guest mode. Local saving works; Firestore sync will use anonymous auth unless you sign in with Google.', 'warn'); } } });
   firebaseReady = state.firebaseReady; AUTH = state.AUTH; FIRESTORE = state.FIRESTORE;
 
   document.getElementById('signInGoogle').addEventListener('click', ()=>signInWithGoogle({ AUTH, authInFlight, setAuthInFlight:v=>{authInFlight=v; document.getElementById('signInGoogle').disabled=v;}, debugLog, setAuthStatus, onUnauthorizedDomain:()=>setAuthStatus(`Google sign-in blocked: ${window.location.hostname || 'file://'} is not an authorised domain in Firebase Auth.`, 'bad') }));

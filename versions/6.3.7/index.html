@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="../../">
 <title>Feesight - School Fees Analyser</title>
 
 <link rel="stylesheet" href="./styles/base.css">
@@ -160,23 +161,9 @@
       <summary>A-level headlines</summary>
       <div class="table-wrap"><table id="benchmarkAlevelTable"></table></div>
     </details>
-    <details>
-      <summary>Edit benchmark datasets (JSON)</summary>
-      <div class="grid g2">
-        <div><label>Fees table rows JSON</label><textarea id="feesJsonEditor" class="mono" rows="8"></textarea></div>
-        <div><label>GCSE table rows JSON</label><textarea id="gcseJsonEditor" class="mono" rows="8"></textarea></div>
-      </div>
-      <div><label>A-level table rows JSON</label><textarea id="alevelJsonEditor" class="mono" rows="8"></textarea></div>
-      <div class="toolbar">
-        <button id="applyBenchmarkJson" type="button">Apply benchmark JSON</button>
-        <button id="resetBenchmarkJson" type="button">Reset benchmark defaults</button>
-      </div>
-      <div id="benchmarkEditorStatus" class="status warn"></div>
-    </details>
   </section>
 
   <footer class="card app-footer version-panel">
-    <div class="data-links">Data sources: <a href="https://www.whitmore.harrow.sch.uk/180/examination-results" target="_blank" rel="noopener">Whitmore results</a> · <a href="https://www.nowerhill.org.uk/335/exam-key-stage-results" target="_blank" rel="noopener">Nower Hill results</a> · <a href="./schools_full.md" target="_blank" rel="noopener">schools_full.md</a> · <a href="./school_full.md" target="_blank" rel="noopener">school_full.md</a></div>
     <button id="versionChip" class="link-btn">Version: loading…</button>
     <div class="footer-flex">
       <div id="versionStatus" class="status warn"></div>

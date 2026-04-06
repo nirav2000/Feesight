@@ -372,13 +372,13 @@ export function setKpis(items){
   });
 }
 
-export function renderBenchmarkTables(){
+export function renderBenchmarkTables(data = {}){
   renderSimpleTable('benchmarkFeesTable',
     ['Stage','MTS','% inc','HABS','% inc','Orley Farm','% inc','John Lyon','% inc'],
-    BENCHMARK_FEES.map(r=>[r.stage,r.mts,r.mtsInc,r.habs,r.habsInc,r.orley,r.orleyInc,r.johnLyon,r.johnLyonInc])
+    (Array.isArray(data.fees) ? data.fees : BENCHMARK_FEES).map(r=>[r.stage,r.mts,r.mtsInc,r.habs,r.habsInc,r.orley,r.orleyInc,r.johnLyon,r.johnLyonInc])
   );
-  renderGcseTable('benchmarkGcseTable', GCSE_HEADLINES, ['2025','2024','2023','2022']);
-  renderAlevelTable('benchmarkAlevelTable', ALEVEL_HEADLINES, ['2025','2024','2023','2022']);
+  renderGcseTable('benchmarkGcseTable', Array.isArray(data.gcse) ? data.gcse : GCSE_HEADLINES, ['2025','2024','2023','2022']);
+  renderAlevelTable('benchmarkAlevelTable', Array.isArray(data.alevel) ? data.alevel : ALEVEL_HEADLINES, ['2025','2024','2023','2022']);
 }
 
 function renderAlevelTable(id, rows, years){

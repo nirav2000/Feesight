@@ -12,7 +12,7 @@ export async function initFirebaseAuth({debugLog,onStatus,onAuthStatus,onUserCha
     return { firebaseReady:false, AUTH:null, FIRESTORE:null };
   }
   try {
-    const [{ initializeApp }, { getFirestore, doc, setDoc, collection, getDocs, query, where, orderBy, limit }, { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, onAuthStateChanged, signOut }] = await Promise.all([
+    const [{ initializeApp }, { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where, orderBy, limit }, { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, onAuthStateChanged, signOut }] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js'),
       import('https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js')
@@ -20,7 +20,7 @@ export async function initFirebaseAuth({debugLog,onStatus,onAuthStatus,onUserCha
     const app = initializeApp(window.FIREBASE_CONFIG);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    const FIRESTORE = { db, doc, setDoc, collection, getDocs, query, where, orderBy, limit };
+    const FIRESTORE = { db, doc, getDoc, setDoc, collection, getDocs, query, where, orderBy, limit };
     const AUTH = { auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInAnonymously, getRedirectResult, onAuthStateChanged, signOut };
     await getRedirectResult(auth).catch(()=>null);
     onAuthStateChanged(auth, user => onUserChanged?.(user || null, AUTH, FIRESTORE));
