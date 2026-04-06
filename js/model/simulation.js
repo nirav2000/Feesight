@@ -23,12 +23,12 @@ export const ORLEY_ROWS = [
 
 // Source datasets: school_full.md and schools_full.md
 export const BENCHMARK_FEES = [
-  { stage:'Pre-Prep', mts:'£7,792', mtsInc:'—', habs:'£8,413', habsInc:'—', orley:'£6,973', orleyInc:'—', johnLyon:'£5,967', johnLyonInc:'—' },
-  { stage:'Prep', mts:'£8,183', mtsInc:'5.0%', habs:'£9,849', habsInc:'17.1%', orley:'£7,415', orleyInc:'6.3%', johnLyon:'£6,790', johnLyonInc:'13.8%' },
-  { stage:'Y7–Y8', mts:'£8,183', mtsInc:'0.0%', habs:'£10,423', habsInc:'5.8%', orley:'£8,044', orleyInc:'8.5%', johnLyon:'£9,416', johnLyonInc:'38.7%' },
-  { stage:'Y9+', mts:'£10,649', mtsInc:'30.1%', habs:'£10,423', habsInc:'0.0%', orley:'—', orleyInc:'—', johnLyon:'£9,416', johnLyonInc:'0.0%' },
-  { stage:'Total to Y8 (R–Y8 weighted years)', mts:'£72,474', mtsInc:'', habs:'£85,481', habsInc:'', orley:'£66,667', orleyInc:'', johnLyon:'£63,893', johnLyonInc:'' },
-  { stage:'Total incl. Y9+ (R–Y9 weighted years)', mts:'£83,123', mtsInc:'', habs:'£95,904', habsInc:'', orley:'—', orleyInc:'', johnLyon:'£73,309', johnLyonInc:'' }
+  { stage:'Pre-Prep (annual, termly×3)', mts:'£23,376', mtsInc:'—', habs:'£25,239', habsInc:'—', orley:'£20,919', orleyInc:'—', johnLyon:'£17,901', johnLyonInc:'—' },
+  { stage:'Prep (annual, termly×3)', mts:'£24,549', mtsInc:'5.0%', habs:'£29,547', habsInc:'17.1%', orley:'£22,245', orleyInc:'6.3%', johnLyon:'£20,370', johnLyonInc:'13.8%' },
+  { stage:'Y7–Y8 (annual, termly×3)', mts:'£24,549', mtsInc:'0.0%', habs:'£31,269', habsInc:'5.8%', orley:'£24,132', orleyInc:'8.5%', johnLyon:'£28,248', johnLyonInc:'38.7%' },
+  { stage:'Y9+ (annual, termly×3)', mts:'£31,947', mtsInc:'30.1%', habs:'£31,269', habsInc:'0.0%', orley:'—', orleyInc:'—', johnLyon:'£28,248', johnLyonInc:'0.0%' },
+  { stage:'Total to Y8 (R–Y8 weighted years, annual)', mts:'£217,422', mtsInc:'', habs:'£256,443', habsInc:'', orley:'£200,001', orleyInc:'', johnLyon:'£191,679', johnLyonInc:'' },
+  { stage:'Total incl. Y9+ (R–Y9 weighted years, annual)', mts:'£249,369', mtsInc:'', habs:'£287,712', habsInc:'', orley:'—', orleyInc:'', johnLyon:'£219,927', johnLyonInc:'' }
 ];
 
 export const GCSE_HEADLINES = [

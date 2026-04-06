@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.14",
-      "label": "v6.3.14 (Current)",
+      "version": "6.3.15",
+      "label": "v6.3.15 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Converted benchmark fee rows from termly to annual (termly \u00d7 3)",
+        "Updated weighted totals to annual amounts",
+        "Added migration logic to auto-upgrade saved benchmark rows/totals to annual values"
+      ]
+    },
+    {
+      "version": "6.3.14",
+      "label": "v6.3.14",
+      "appFile": "versions/6.3.14/index.html",
       "changes": [
         "Updated weighted totals to include Reception (Pre-Prep = 3 years: R, Y1, Y2)",
         "Updated migration logic so saved benchmark data is auto-corrected to R-based totals",

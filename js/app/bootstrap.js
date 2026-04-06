@@ -9,7 +9,7 @@ import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis, renderBenchmarkTables } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.3.14';
+const APP_VERSION = '6.3.15';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
@@ -25,11 +25,15 @@ function migrateBenchmarkFeesRows(rows){
   if(!Array.isArray(rows)) return rows;
   return rows.map(row=>{
     const stage = String(row?.stage || '').trim();
-    if(stage === 'Total to Y8' || stage === 'Total to Y8 (weighted years)' || stage === 'Total to Y8 (Y1–Y8 weighted years)' || stage === 'Total to Y8 (R–Y8 weighted years)'){
-      return { ...row, stage:'Total to Y8 (R–Y8 weighted years)', mts:'£72,474', habs:'£85,481', orley:'£66,667', johnLyon:'£63,893' };
+    if(stage === 'Total to Y8' || stage === 'Total to Y8 (weighted years)' || stage === 'Total to Y8 (Y1–Y8 weighted years)' || stage === 'Total to Y8 (R–Y8 weighted years)' || stage === 'Total to Y8 (R–Y8 weighted years, annual)'){
+      return { ...row, stage:'Total to Y8 (R–Y8 weighted years, annual)', mts:'£217,422', habs:'£256,443', orley:'£200,001', johnLyon:'£191,679' };
     }
-    if(stage === 'Total incl. Y9+' || stage === 'Total incl. Y9+ (weighted years)' || stage === 'Total incl. Y9+ (Y1–Y9 weighted years)' || stage === 'Total incl. Y9+ (R–Y9 weighted years)'){
-      return { ...row, stage:'Total incl. Y9+ (R–Y9 weighted years)', mts:'£83,123', habs:'£95,904', orley:'—', johnLyon:'£73,309' };
+    if(stage === 'Pre-Prep' || stage === 'Pre-Prep (annual, termly×3)'){ return { ...row, stage:'Pre-Prep (annual, termly×3)', mts:'£23,376', habs:'£25,239', orley:'£20,919', johnLyon:'£17,901' }; }
+    if(stage === 'Prep' || stage === 'Prep (annual, termly×3)'){ return { ...row, stage:'Prep (annual, termly×3)', mts:'£24,549', habs:'£29,547', orley:'£22,245', johnLyon:'£20,370' }; }
+    if(stage === 'Y7–Y8' || stage === 'Y7–Y8 (annual, termly×3)'){ return { ...row, stage:'Y7–Y8 (annual, termly×3)', mts:'£24,549', habs:'£31,269', orley:'£24,132', johnLyon:'£28,248' }; }
+    if(stage === 'Y9+' || stage === 'Y9+ (annual, termly×3)'){ return { ...row, stage:'Y9+ (annual, termly×3)', mts:'£31,947', habs:'£31,269', orley:'—', johnLyon:'£28,248' }; }
+    if(stage === 'Total incl. Y9+' || stage === 'Total incl. Y9+ (weighted years)' || stage === 'Total incl. Y9+ (Y1–Y9 weighted years)' || stage === 'Total incl. Y9+ (R–Y9 weighted years)' || stage === 'Total incl. Y9+ (R–Y9 weighted years, annual)'){
+      return { ...row, stage:'Total incl. Y9+ (R–Y9 weighted years, annual)', mts:'£249,369', habs:'£287,712', orley:'—', johnLyon:'£219,927' };
     }
     return row;
   });
