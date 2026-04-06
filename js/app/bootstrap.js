@@ -3,13 +3,13 @@
  * Boundaries: wire modules, DOM events, state orchestration, and body dataset syncing.
  */
 
-import { ORLEY_ROWS, FUND_LIBRARY, deepCopy, avg, getFundData, annualReturnsForRows, extendRows, updatedComparison, summaryFromComparison, termStructure, requiredCapitalForExactSequence, runDecum, probabilityCurve } from '../model/simulation.js';
+import { ORLEY_ROWS, FUND_LIBRARY, deepCopy, avg, getFundData, annualReturnsForRows, extendRows, updatedComparison, summaryFromComparison, termStructure, requiredCapitalForExactSequence, runDecum, probabilityCurve, formatYearGroupLabel } from '../model/simulation.js';
 import { loadDb, saveDb, saveCurrentSchoolRemote, refreshRemoteSchools, normalizeSchoolName, loadLatestRevisionRows } from '../data/schools-store.js';
 import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.2.6';
+const APP_VERSION = '6.2.7';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
@@ -102,7 +102,7 @@ function refreshCurrentRowOptions(){
   const rows = annualRows(); const sel = document.getElementById('currentRow'); const previous = sel.value;
   sel.replaceChildren();
   rows.forEach((r,i)=>{ const option = document.createElement('option'); option.value = String(i); // Trust boundary: row fields are user input.
-    option.textContent = `${r.year} · ${r.group}`; if(String(i)===String(previous)) option.selected = true; sel.appendChild(option); });
+    option.textContent = `${r.year} · ${formatYearGroupLabel(r.group)}`; if(String(i)===String(previous)) option.selected = true; sel.appendChild(option); });
   if (!sel.value && rows.length) sel.value = String(Math.max(0, rows.length-2));
 }
 function updateAnnualisedDisplays(){ [...document.querySelectorAll('#feeInputTable tbody tr')].forEach(tr=>{ const input=Number(tr.querySelector('.feeInput').value||0); tr.querySelector('.annualised').textContent = input ? money(input * (document.getElementById('feeMode').value === 'termly' ? 3 : 1)) : '—'; }); }

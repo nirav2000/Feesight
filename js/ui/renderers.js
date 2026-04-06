@@ -3,7 +3,7 @@
  * Boundaries: DOM/chart rendering only; receives prepared data.
  */
 
-import { avg } from '../model/simulation.js';
+import { avg, formatYearGroupLabel } from '../model/simulation.js';
 
 export const fmt = n => new Intl.NumberFormat('en-GB',{maximumFractionDigits:0}).format(n);
 export const fmt1 = n => new Intl.NumberFormat('en-GB',{minimumFractionDigits:1,maximumFractionDigits:1}).format(n);
@@ -134,7 +134,7 @@ export function renderUpdatedTable(comp, fund, displayMode='table'){
   const totalGrowth = comp.reduce((s,r)=>s+r.annualGrowth,0);
   if(displayMode === 'cards'){
     renderCardGrid('updatedTable', comp.map(r=>({
-      title: `${r.year} · ${r.group}`,
+      title: `${r.year} · ${formatYearGroupLabel(r.group)}`,
       rows: [
         ['Annual fee', money(r.fee)],
         ['Cumulative fees', money(r.cumFees)],
@@ -155,7 +155,7 @@ export function renderUpdatedTable(comp, fund, displayMode='table'){
   const tbody = document.createElement('tbody');
   comp.forEach(r=>{
     const tr = document.createElement('tr');
-    [r.year, r.group, money(r.fee), r.feeDelta===null?'—':pct(r.feeDelta), money(r.cumFees), money(r.fundValue), money(r.annualGrowth), pct(r.returnPct), money(r.gainVsFees)].forEach((cell,idx)=>{ const td = document.createElement('td'); td.textContent = cell; if(idx===6) td.className = r.annualGrowth>=0?'good':'bad'; if(idx===7) td.className = r.returnPct>=0?'good':'bad'; if(idx===8) td.className = r.gainVsFees>=0?'good':'bad'; tr.appendChild(td); });
+    [r.year, formatYearGroupLabel(r.group), money(r.fee), r.feeDelta===null?'—':pct(r.feeDelta), money(r.cumFees), money(r.fundValue), money(r.annualGrowth), pct(r.returnPct), money(r.gainVsFees)].forEach((cell,idx)=>{ const td = document.createElement('td'); td.textContent = cell; if(idx===6) td.className = r.annualGrowth>=0?'good':'bad'; if(idx===7) td.className = r.returnPct>=0?'good':'bad'; if(idx===8) td.className = r.gainVsFees>=0?'good':'bad'; tr.appendChild(td); });
     tbody.appendChild(tr);
   });
   const totalsTr = document.createElement('tr');
@@ -187,7 +187,7 @@ export function renderExtendedTable(baseRows, extRows, avgInc, displayMode='tabl
   const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = `Average fee increase used for extensions: ${pct(avgInc*100)}`; meta.appendChild(pill);
   if(displayMode === 'cards'){
     renderCardGrid('extendedTable', extRows.map((r,i)=>({
-      title: `${r.year} · ${r.group}`,
+      title: `${r.year} · ${formatYearGroupLabel(r.group)}`,
       rows: [['Annual fee', money(r.fee)], ['Basis', i<baseRows.length?'Entered fee':`Estimated using average increase ${pct(avgInc*100)}`]]
     })));
     return;
@@ -198,7 +198,27 @@ export function renderExtendedTable(baseRows, extRows, avgInc, displayMode='tabl
   ['Academic year','Year group','Annual fee','Basis'].forEach(text=>{ const th = document.createElement('th'); th.textContent = text; trHead.appendChild(th); });
   thead.appendChild(trHead);
   const tbody = document.createElement('tbody');
-  extRows.forEach((r,i)=>{ const tr = document.createElement('tr'); [r.year, r.group, money(r.fee), i<baseRows.length?'Entered fee':`Estimated using average increase ${pct(avgInc*100)}`].forEach(text=>{ const td = document.createElement('td'); td.textContent = text; tr.appendChild(td); }); tbody.appendChild(tr); });
+  extRows.forEach((r,i)=>{ const tr = document.createElement('tr'); [r.year, formatYearGroupLabel(r.group), money(r.fee), i<baseRows.length?'Entered fee':`Estimated using average increase ${pct(avgInc*100)}`].forEach(text=>{ const td = document.createElement('td'); td.textContent = text; tr.appendChild(td); }); tbody.appendChild(tr); });
+  const totalFees = extRows.reduce((sum, row)=>sum + (Number(row.fee) || 0), 0);
+  const avgFee = extRows.length ? totalFees / extRows.length : 0;
+  const totals = document.createElement('tr');
+  const totalsLabel = document.createElement('td');
+  totalsLabel.colSpan = 2;
+  const totalsStrong = document.createElement('strong');
+  totalsStrong.textContent = 'Total / Average';
+  totalsLabel.appendChild(totalsStrong);
+  totals.appendChild(totalsLabel);
+  const totalCell = document.createElement('td');
+  const totalStrong = document.createElement('strong');
+  totalStrong.textContent = money(totalFees);
+  totalCell.appendChild(totalStrong);
+  totals.appendChild(totalCell);
+  const avgCell = document.createElement('td');
+  const avgStrong = document.createElement('strong');
+  avgStrong.textContent = `Average annual fee: ${money(avgFee)}`;
+  avgCell.appendChild(avgStrong);
+  totals.appendChild(avgCell);
+  tbody.appendChild(totals);
   table.replaceChildren(thead, tbody);
 }
 
@@ -296,7 +316,26 @@ export function renderTermTable(rows, fund){
   ['Year','Group','Term','Start','Fee draw','After fee','Term growth','End'].forEach(text=>{ const th = document.createElement('th'); th.textContent = text; trHead.appendChild(th); });
   thead.appendChild(trHead);
   const tbody = document.createElement('tbody');
-  rows.forEach(r=>{ const tr = document.createElement('tr'); [r.year, r.group, r.term, money(r.start), money(r.fee), money(r.afterFee), money(r.growth), money(r.end)].forEach((value,idx)=>{ const td = document.createElement('td'); td.textContent = value; if(idx===6) td.className = r.growth>=0?'good':'bad'; tr.appendChild(td); }); tbody.appendChild(tr); });
+  rows.forEach(r=>{ const tr = document.createElement('tr'); [r.year, formatYearGroupLabel(r.group), r.term, money(r.start), money(r.fee), money(r.afterFee), money(r.growth), money(r.end)].forEach((value,idx)=>{ const td = document.createElement('td'); td.textContent = value; if(idx===6) td.className = r.growth>=0?'good':'bad'; tr.appendChild(td); }); tbody.appendChild(tr); });
+  const totalFees = rows.reduce((sum,row)=>sum + (Number(row.fee) || 0), 0);
+  const totalGrowth = rows.reduce((sum,row)=>sum + (Number(row.growth) || 0), 0);
+  const avgTermGrowth = rows.length ? totalGrowth / rows.length : 0;
+  const endingBalance = rows.at(-1)?.end || 0;
+  const totals = document.createElement('tr');
+  const label = document.createElement('td');
+  label.colSpan = 3;
+  const labelStrong = document.createElement('strong');
+  labelStrong.textContent = 'Total / Average';
+  label.appendChild(labelStrong);
+  totals.appendChild(label);
+  [money(rows[0]?.start || 0), money(totalFees), '—', money(totalGrowth), money(endingBalance)].forEach((value, idx)=>{
+    const td = document.createElement('td');
+    const strong = document.createElement('strong');
+    strong.textContent = idx === 3 ? `${value} (avg ${money(avgTermGrowth)})` : value;
+    td.appendChild(strong);
+    totals.appendChild(td);
+  });
+  tbody.appendChild(totals);
   table.replaceChildren(thead, tbody);
 }
 

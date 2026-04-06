@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Feesight - School Fees Analyser</title>
 
-<link rel="stylesheet" href="./styles/base.css">
-<link rel="stylesheet" href="./styles/theme-default.css">
-<link rel="stylesheet" href="./styles/theme-dark.css">
-<link rel="stylesheet" href="./styles/view-current.css">
-<link rel="stylesheet" href="./styles/view-command.css">
-<link rel="stylesheet" href="./styles/view-story.css">
-<link rel="stylesheet" href="./styles/view-simulator.css">
+<link rel="stylesheet" href="../styles/base.css">
+<link rel="stylesheet" href="../styles/theme-default.css">
+<link rel="stylesheet" href="../styles/theme-dark.css">
+<link rel="stylesheet" href="../styles/view-current.css">
+<link rel="stylesheet" href="../styles/view-command.css">
+<link rel="stylesheet" href="../styles/view-story.css">
+<link rel="stylesheet" href="../styles/view-simulator.css">
 
 
 
@@ -21,7 +21,7 @@
 <div class="app-shell wrap grid">
   <header class="app-header brand-card hero-panel hero-panel-compact">
     <div class="brand-wrap app-toolbar">
-      <img class="brand-logo" src="./feesight-logo-light.svg" alt="Feesight logo">
+      <img class="brand-logo" src="../feesight-logo-light.svg" alt="Feesight logo">
       <div class="brand-copy">
         <p class="sub">School fees analyser with drawdown, stress testing, and fund comparisons. Stored fund return points are source-backed and net of fund fees where stated.</p>
       </div>
@@ -53,7 +53,7 @@
         <div class="w-school control-group"><label>School</label><input id="schoolName" type="text" list="schoolSuggestions" placeholder="Type or select saved school"><datalist id="schoolSuggestions"></datalist></div>
         <div class="w-fee control-group"><label>Fee mode</label><select id="feeMode"><option value="annual">Annual</option><option value="termly">Termly</option></select></div>
         <div class="w-fund control-group"><label>Fund / cash option</label><select id="fundSelect"></select></div>
-        <div class="w-extend control-group"><label>Extend fees to</label><select id="endGroup"><option value="Y6">Y6 - 10+</option><option value="Y7">Y7 - 11+</option><option value="Y8">Y8 - 12+</option><option value="Y9">Y9 - 13+</option><option value="Y10">Y10 - 14+ (GCSE)</option><option value="Y11">Y11 - 15+ (GCSE)</option><option value="Y12">Y12 - 16+ (A-Level)</option><option value="Y13">Y13 - 17+ (A-Level)</option></select></div>
+        <div class="w-extend control-group"><label>Extend fees to</label><select id="endGroup"><option>Y6</option><option>Y7</option><option>Y8</option></select></div>
         <div class="w-plan control-group"><label>Plan from row</label><select id="currentRow"></select></div>
       </div>
       <div class="toolbar">
@@ -160,9 +160,9 @@
   </div>
 </div>
 
-<script src="./firebase-config.js"></script>
+<script src="../firebase-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="./js/ui-state.js"></script>
+<script src="../js/ui-state.js"></script>
 
 <script>
 window.FIREBASE_CONFIG = {
@@ -177,7 +177,7 @@ window.FIREBASE_CONFIG = {
 </script>
 
 
-<script type="module" src="./js/app/bootstrap.js"></script>
+<script type="module" src="../js/app/bootstrap.js"></script>
 
 </body>
 </html>

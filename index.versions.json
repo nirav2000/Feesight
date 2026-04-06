@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.2.6",
-      "label": "v6.2.6 (Current)",
+      "version": "6.2.7",
+      "label": "v6.2.7 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Added Year Group + age notation throughout key planning outputs",
+        "Extended fee projection endpoint to Y13 with GCSE and A-Level dropdown labels",
+        "Added Total/Average summary rows to Extended Fees and Term-by-Term views"
+      ]
+    },
+    {
+      "version": "6.2.6",
+      "label": "v6.2.6",
+      "appFile": "versions/6.2.6/index.html",
       "changes": [
         "Improved iPhone formatting with safer single-column controls and responsive menu popover",
         "Reduced horizontal overflow risks in the app shell and toolbar regions",

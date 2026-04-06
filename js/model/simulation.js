@@ -23,6 +23,28 @@ export const ORLEY_ROWS = [
 
 export const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
 export const deepCopy = o => JSON.parse(JSON.stringify(o));
+export const YEAR_GROUP_AGE_MAP = {
+  Reception:'4+',
+  Y1:'5+',
+  Y2:'6+',
+  Y3:'7+',
+  Y4:'8+',
+  Y5:'9+',
+  Y6:'10+',
+  Y7:'11+',
+  Y8:'12+',
+  Y9:'13+',
+  Y10:'14+',
+  Y11:'15+',
+  Y12:'16+',
+  Y13:'17+'
+};
+export const YEAR_GROUP_ORDER = ['Reception','Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8','Y9','Y10','Y11','Y12','Y13'];
+export function formatYearGroupLabel(group){
+  const key = String(group || '').trim();
+  const age = YEAR_GROUP_AGE_MAP[key];
+  return age ? `${key} - ${age}` : key;
+}
 
 export function getFundData(key, cashRate){
   if (key === 'CASH') return {...FUND_LIBRARY.CASH, returns:[cashRate], returnLabels:['Custom annual cash rate']};
@@ -36,9 +58,12 @@ export function annualReturnsForRows(fund, count, cashRate){
 }
 export function avgFeeIncrease(rows){ const ch=[]; for(let i=1;i<rows.length;i++) ch.push(rows[i].fee/rows[i-1].fee - 1); return avg(ch); }
 export function extendRows(rows, endGroup){
-  const order = ['Reception','Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8'];
+  const order = YEAR_GROUP_ORDER;
   const out = deepCopy(rows); const g = avgFeeIncrease(rows); let prev = out[out.length-1];
-  for(let idx=order.indexOf(prev.group)+1; idx<=order.indexOf(endGroup); idx++){
+  const startIdx = order.indexOf(prev.group);
+  const endIdx = order.indexOf(endGroup);
+  if(startIdx < 0 || endIdx < 0 || endIdx <= startIdx) return {rows:out, avgIncrease:g};
+  for(let idx=startIdx+1; idx<=endIdx; idx++){
     const y0 = Number(prev.year.slice(0,4)) + 1; const y1 = String(y0+1).slice(2); const fee = Math.round(prev.fee * (1+g));
     prev = {year:`${y0}–${y1}`, group:order[idx], fee, estimated:true}; out.push(prev);
   }
