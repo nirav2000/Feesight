@@ -27,8 +27,8 @@ export const BENCHMARK_FEES = [
   { stage:'Prep', mts:'£8,183', mtsInc:'5.0%', habs:'£9,849', habsInc:'17.1%', orley:'£7,415', orleyInc:'6.3%', johnLyon:'£6,790', johnLyonInc:'13.8%' },
   { stage:'Y7–Y8', mts:'£8,183', mtsInc:'0.0%', habs:'£10,423', habsInc:'5.8%', orley:'£8,044', orleyInc:'8.5%', johnLyon:'£9,416', johnLyonInc:'38.7%' },
   { stage:'Y9+', mts:'£10,649', mtsInc:'30.1%', habs:'£10,423', habsInc:'0.0%', orley:'—', orleyInc:'—', johnLyon:'£9,416', johnLyonInc:'0.0%' },
-  { stage:'Total to Y8 (Y1–Y8 weighted years)', mts:'£64,682', mtsInc:'', habs:'£77,068', habsInc:'', orley:'£59,694', orleyInc:'', johnLyon:'£57,926', johnLyonInc:'' },
-  { stage:'Total incl. Y9+ (Y1–Y9 weighted years)', mts:'£75,331', mtsInc:'', habs:'£87,491', habsInc:'', orley:'—', orleyInc:'', johnLyon:'£67,342', johnLyonInc:'' }
+  { stage:'Total to Y8 (R–Y8 weighted years)', mts:'£72,474', mtsInc:'', habs:'£85,481', habsInc:'', orley:'£66,667', orleyInc:'', johnLyon:'£63,893', johnLyonInc:'' },
+  { stage:'Total incl. Y9+ (R–Y9 weighted years)', mts:'£83,123', mtsInc:'', habs:'£95,904', habsInc:'', orley:'—', orleyInc:'', johnLyon:'£73,309', johnLyonInc:'' }
 ];
 
 export const GCSE_HEADLINES = [

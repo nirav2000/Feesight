@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.13",
-      "label": "v6.3.13 (Current)",
+      "version": "6.3.14",
+      "label": "v6.3.14 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Updated weighted totals to include Reception (Pre-Prep = 3 years: R, Y1, Y2)",
+        "Updated migration logic so saved benchmark data is auto-corrected to R-based totals",
+        "Archived previous build as v6.3.13"
+      ]
+    },
+    {
+      "version": "6.3.13",
+      "label": "v6.3.13",
+      "appFile": "versions/6.3.13/index.html",
       "changes": [
         "Added benchmark data migration so previously saved local/cloud tables update to corrected Y1\u2013Y2 weighted totals",
         "Forces refresh of stored benchmark fee total rows on load",

@@ -9,7 +9,7 @@ import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis, renderBenchmarkTables } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.3.13';
+const APP_VERSION = '6.3.14';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
@@ -25,11 +25,11 @@ function migrateBenchmarkFeesRows(rows){
   if(!Array.isArray(rows)) return rows;
   return rows.map(row=>{
     const stage = String(row?.stage || '').trim();
-    if(stage === 'Total to Y8' || stage === 'Total to Y8 (weighted years)'){
-      return { ...row, stage:'Total to Y8 (Y1–Y8 weighted years)', mts:'£64,682', habs:'£77,068', orley:'£59,694', johnLyon:'£57,926' };
+    if(stage === 'Total to Y8' || stage === 'Total to Y8 (weighted years)' || stage === 'Total to Y8 (Y1–Y8 weighted years)' || stage === 'Total to Y8 (R–Y8 weighted years)'){
+      return { ...row, stage:'Total to Y8 (R–Y8 weighted years)', mts:'£72,474', habs:'£85,481', orley:'£66,667', johnLyon:'£63,893' };
     }
-    if(stage === 'Total incl. Y9+' || stage === 'Total incl. Y9+ (weighted years)'){
-      return { ...row, stage:'Total incl. Y9+ (Y1–Y9 weighted years)', mts:'£75,331', habs:'£87,491', orley:'—', johnLyon:'£67,342' };
+    if(stage === 'Total incl. Y9+' || stage === 'Total incl. Y9+ (weighted years)' || stage === 'Total incl. Y9+ (Y1–Y9 weighted years)' || stage === 'Total incl. Y9+ (R–Y9 weighted years)'){
+      return { ...row, stage:'Total incl. Y9+ (R–Y9 weighted years)', mts:'£83,123', habs:'£95,904', orley:'—', johnLyon:'£73,309' };
     }
     return row;
   });
