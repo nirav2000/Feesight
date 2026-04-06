@@ -3,7 +3,7 @@
  * Boundaries: DOM/chart rendering only; receives prepared data.
  */
 
-import { avg, formatYearGroupLabel } from '../model/simulation.js';
+import { avg, formatYearGroupLabel, BENCHMARK_FEES, GCSE_HEADLINES, ALEVEL_HEADLINES } from '../model/simulation.js';
 
 export const fmt = n => new Intl.NumberFormat('en-GB',{maximumFractionDigits:0}).format(n);
 export const fmt1 = n => new Intl.NumberFormat('en-GB',{minimumFractionDigits:1,maximumFractionDigits:1}).format(n);
@@ -370,4 +370,35 @@ export function setKpis(items){
     kpi.append(label, value);
     container.appendChild(kpi);
   });
+}
+
+export function renderBenchmarkTables(){
+  renderSimpleTable('benchmarkFeesTable',
+    ['Stage','MTS','% inc','HABS','% inc','Orley Farm','% inc','John Lyon','% inc'],
+    BENCHMARK_FEES.map(r=>[r.stage,r.mts,r.mtsInc,r.habs,r.habsInc,r.orley,r.orleyInc,r.johnLyon,r.johnLyonInc])
+  );
+  renderSimpleTable('benchmarkGcseTable',
+    ['School','2025','2024','2023','2022'],
+    GCSE_HEADLINES.map(r=>[r.school,r.y2025,r.y2024,r.y2023,r.y2022])
+  );
+  renderSimpleTable('benchmarkAlevelTable',
+    ['School','2025','2024','2023','2022'],
+    ALEVEL_HEADLINES.map(r=>[r.school,r.y2025,r.y2024,r.y2023,r.y2022])
+  );
+}
+
+function renderSimpleTable(id, headers, rows){
+  const table = document.getElementById(id);
+  if(!table) return;
+  const thead = document.createElement('thead');
+  const trh = document.createElement('tr');
+  headers.forEach(h=>{ const th = document.createElement('th'); th.textContent = h; trh.appendChild(th); });
+  thead.appendChild(trh);
+  const tbody = document.createElement('tbody');
+  rows.forEach(row=>{
+    const tr = document.createElement('tr');
+    row.forEach(cell=>{ const td = document.createElement('td'); td.textContent = String(cell || ''); tr.appendChild(td); });
+    tbody.appendChild(tr);
+  });
+  table.replaceChildren(thead, tbody);
 }

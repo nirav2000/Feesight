@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.2.9",
-      "label": "v6.2.9 (Current)",
+      "version": "6.3.0",
+      "label": "v6.3.0 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Added benchmark fees, GCSE/IGCSE, and A-level tables for MTS/HABS/Orley/John Lyon comparators",
+        "Inserted school benchmark panel directly into the app UI for quick reference",
+        "Improved fee projection robustness with normalized year-group parsing and Y8→Y9 transition uplift"
+      ]
+    },
+    {
+      "version": "6.2.9",
+      "label": "v6.2.9",
+      "appFile": "versions/6.2.9/index.html",
       "changes": [
         "Normalized year-group parsing so labels like 'Y8 - 12+' map to canonical year groups",
         "Ensured Y8→Y9 +30.0% transition uplift applies even when stored labels include ages",

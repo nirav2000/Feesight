@@ -6,10 +6,10 @@
 import { ORLEY_ROWS, FUND_LIBRARY, deepCopy, avg, getFundData, annualReturnsForRows, extendRows, updatedComparison, summaryFromComparison, termStructure, requiredCapitalForExactSequence, runDecum, probabilityCurve, formatYearGroupLabel, normalizeYearGroup } from '../model/simulation.js';
 import { loadDb, saveDb, saveCurrentSchoolRemote, refreshRemoteSchools, normalizeSchoolName, loadLatestRevisionRows } from '../data/schools-store.js';
 import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
-import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis } from '../ui/renderers.js';
+import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis, renderBenchmarkTables } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.2.9';
+const APP_VERSION = '6.3.0';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
@@ -215,6 +215,7 @@ function build(){
   const src = annualReturnsForRows(fund, Math.max(1, remainingRows.length), cashRate); const sorted = src.slice().sort((a,b)=>a-b), reversed=src.slice().sort((a,b)=>b-a), minRet=Math.min(...src), avRet=avg(src);
   const stress = [{name:'Best case actual order', seq: exactAnnualReturns, returnRef:`Actual stored order · avg ${pct(avRet)}`},{name:'Strongest returns first', seq: reversed.slice(0,remainingRows.length), returnRef:'Stored returns reordered best first'},{name:'Average return repeated', seq: remainingRows.map(()=>avRet), returnRef:`Flat ${pct(avRet)}`},{name:'Weakest returns first', seq: sorted.slice(0,remainingRows.length), returnRef:'Stored returns reordered worst first'},{name:'Severe stress', seq: remainingRows.map(()=>minRet), returnRef:`Repeat worst stored return ${pct(minRet)}`}] .map(s=>{ const terms=termStructure(remainingRows, 3, s.seq); const req=requiredCapitalForExactSequence(terms); const end=runDecum(req, terms).at(-1)?.end||0; return {...s, requiredStart:req, endBalance:end, outcome:req<=remainingFees?'Capital-efficient':'Needs more than fees upfront'}; });
   renderStressTable(stress, remainingFees, fund, displayMode);
+  renderBenchmarkTables();
 }
 
 async function bootstrap(){

@@ -21,6 +21,35 @@ export const ORLEY_ROWS = [
   {year:'2026–27', group:'Y5', feeInput:8326}
 ];
 
+export const BENCHMARK_FEES = [
+  { stage:'Pre-Prep', mts:'£7,792', mtsInc:'—', habs:'£8,413', habsInc:'—', orley:'£6,973', orleyInc:'—', johnLyon:'£5,967', johnLyonInc:'—' },
+  { stage:'Prep', mts:'£8,183', mtsInc:'5.0%', habs:'£9,849', habsInc:'17.1%', orley:'£7,415', orleyInc:'6.3%', johnLyon:'£6,790', johnLyonInc:'13.8%' },
+  { stage:'Y7–Y8', mts:'£8,183', mtsInc:'0.0%', habs:'£10,423', habsInc:'5.8%', orley:'£8,044', orleyInc:'8.5%', johnLyon:'£9,416', johnLyonInc:'38.7%' },
+  { stage:'Y9+', mts:'£10,649', mtsInc:'30.1%', habs:'£10,423', habsInc:'0.0%', orley:'—', orleyInc:'—', johnLyon:'£9,416', johnLyonInc:'0.0%' },
+  { stage:'Total to Y8', mts:'£24,158', mtsInc:'', habs:'£28,685', habsInc:'', orley:'£22,432', orleyInc:'', johnLyon:'£22,173', johnLyonInc:'' },
+  { stage:'Total incl. Y9+', mts:'£34,807', mtsInc:'', habs:'£39,108', habsInc:'', orley:'—', orleyInc:'', johnLyon:'£31,589', johnLyonInc:'' }
+];
+
+export const GCSE_HEADLINES = [
+  { school:'HABS', y2025:'47% grade 9; 73% grades 9–8; 88% grades 9–7', y2024:'53% grade 9; 78.4% grades 9–8; 91.5% grades 9–7', y2023:'51.1% grade 9; 73.4% grades 9–8', y2022:'Not found' },
+  { school:'MTS', y2025:'43% grade 9; 71% grades 9–8; 88% grades 9–7', y2024:'39% grade 9; 70% grades 9–8; 87.7% grades 9–7', y2023:'68.3% grades 9–8; 86.2% grades 9–7', y2022:'77.8% grades 9–8; 93.1% grades 9–7' },
+  { school:'John Lyon', y2025:'17% grade 9; 41% grades 9–8; 62% grades 9–7', y2024:'20% grade 9; 43% grades 9–8; 64% grades 9–7', y2023:'Not found', y2022:'Not found' },
+  { school:'Harrow School', y2025:'Over 40% grade 9; about two-thirds grades 9–8', y2024:'Over 40% grade 9; about two-thirds grades 9–8', y2023:'Over 40% grade 9; over 70% grades 9–8', y2022:'48% grade 9; 75.1% grades 9–8/A*' },
+  { school:'Whitmore', y2025:'No school-published GCSE headline found', y2024:'Attainment 8: 54.7; grade 5+ Eng/Maths: 56.7%; grade 9–4: 74.4%; Progress 8: 0.76', y2023:'Attainment 8: 57.5; grade 5+ Eng/Maths: 61%; grade 9–4: 74%; Progress 8: 1.06', y2022:'Attainment 8: 59.9; grade 5+ Eng/Maths: 69%; grade 9–4: 82%; Progress 8: 1.15' },
+  { school:'Pinner High', y2025:'34% grades 9–7; 71% grades 9–5; 81% grades 9–4; 70% grade 5+ Eng/Maths', y2024:'34% grades 9–7; 69% grades 9–5; 82% grades 9–4; 67% grade 5+ Eng/Maths', y2023:'35% grades 9–7; 73% grades 9–5; 85% grades 9–4; 75% grade 5+ Eng/Maths', y2022:'34% grades 9–7; 71% grades 9–5; 82% grades 9–4; 60% grade 5+ Eng/Maths' },
+  { school:'Nower Hill', y2025:'No school-published GCSE headline found', y2024:'Official compare page located but detailed figures not retrievable in provided dataset', y2023:'—', y2022:'—' }
+];
+
+export const ALEVEL_HEADLINES = [
+  { school:'HABS', y2025:'46% A*; 79% A*–A', y2024:'38% A*; 75% A*–A; 93% A*–B', y2023:'48% A*; 81% A*–A', y2022:'Not found' },
+  { school:'MTS', y2025:'33% A*; 70% A*–A; 89.5% A*–B', y2024:'36.5% A*; 71.1% A*–A; 91.4% A*–B', y2023:'32.8% A*; 70.1% A*–A; 89.0% A*–B', y2022:'34.4% A*; 76.5% A*–A; 95% A*–B' },
+  { school:'John Lyon', y2025:'42.8% A*–A; 86.2% A*–C', y2024:'12% A*; 45% A*–A; 86% A*–C', y2023:'Not found', y2022:'Not found' },
+  { school:'Harrow School', y2025:'Nearly one in three A*; over 65% A*–A; almost 90% A*–B', y2024:'32% A*; 67% A*–A; 89% A*–B', y2023:'About one-third A*; over 60% A*–A; almost 90% A*–B', y2022:'Over 40% A*' },
+  { school:'Whitmore', y2025:'No verified school-level A-level headline found', y2024:'Not found', y2023:'Not found', y2022:'Not found' },
+  { school:'Pinner High', y2025:'22% A*–A; 49% A*–B', y2024:'About 25% A*–A; 12% achieved AAB+; average grade C+', y2023:'30% A*–A; 58% A*–B; 16.5% achieved AAB+', y2022:'No A-level cohort published' },
+  { school:'Nower Hill', y2025:'No verified school-level A-level headline found', y2024:'Not found', y2023:'Not found', y2022:'Not found' }
+];
+
 export const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
 export const deepCopy = o => JSON.parse(JSON.stringify(o));
 export const YEAR_GROUP_AGE_MAP = {

@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Feesight - School Fees Analyser</title>
 
-<link rel="stylesheet" href="./styles/base.css">
-<link rel="stylesheet" href="./styles/theme-default.css">
-<link rel="stylesheet" href="./styles/theme-dark.css">
-<link rel="stylesheet" href="./styles/view-current.css">
-<link rel="stylesheet" href="./styles/view-command.css">
-<link rel="stylesheet" href="./styles/view-story.css">
-<link rel="stylesheet" href="./styles/view-simulator.css">
+<link rel="stylesheet" href="../styles/base.css">
+<link rel="stylesheet" href="../styles/theme-default.css">
+<link rel="stylesheet" href="../styles/theme-dark.css">
+<link rel="stylesheet" href="../styles/view-current.css">
+<link rel="stylesheet" href="../styles/view-command.css">
+<link rel="stylesheet" href="../styles/view-story.css">
+<link rel="stylesheet" href="../styles/view-simulator.css">
 
 
 
@@ -21,7 +21,7 @@
 <div class="app-shell wrap grid">
   <header class="app-header brand-card hero-panel hero-panel-compact">
     <div class="brand-wrap app-toolbar">
-      <img class="brand-logo" src="./feesight-logo-light.svg" alt="Feesight logo">
+      <img class="brand-logo" src="../feesight-logo-light.svg" alt="Feesight logo">
       <div class="brand-copy">
         <p class="sub">School fees analyser with drawdown, stress testing, and fund comparisons. Stored fund return points are source-backed and net of fund fees where stated.</p>
       </div>
@@ -139,23 +139,6 @@
     </section>
   </div>
 
-  <section class="card panel table-panel">
-    <h2>School fees and academic benchmark tables</h2>
-    <div class="panel-note">Based on the dataset you provided for MTS, HABS, Orley Farm, John Lyon and comparator schools.</div>
-    <details open>
-      <summary>Fees stage comparison</summary>
-      <div class="table-wrap"><table id="benchmarkFeesTable"></table></div>
-    </details>
-    <details>
-      <summary>GCSE / IGCSE headlines</summary>
-      <div class="table-wrap"><table id="benchmarkGcseTable"></table></div>
-    </details>
-    <details>
-      <summary>A-level headlines</summary>
-      <div class="table-wrap"><table id="benchmarkAlevelTable"></table></div>
-    </details>
-  </section>
-
   <footer class="card app-footer version-panel">
     <button id="versionChip" class="link-btn">Version: loading…</button>
     <div class="footer-flex">
@@ -177,9 +160,9 @@
   </div>
 </div>
 
-<script src="./firebase-config.js"></script>
+<script src="../firebase-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="./js/ui-state.js"></script>
+<script src="../js/ui-state.js"></script>
 
 <script>
 window.FIREBASE_CONFIG = {
@@ -194,7 +177,7 @@ window.FIREBASE_CONFIG = {
 </script>
 
 
-<script type="module" src="./js/app/bootstrap.js"></script>
+<script type="module" src="../js/app/bootstrap.js"></script>
 
 </body>
 </html>
