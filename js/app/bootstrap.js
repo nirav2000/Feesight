@@ -9,7 +9,7 @@ import { initFirebaseAuth, signInWithGoogle } from '../auth/firebase-auth.js';
 import { money, pct, fmt1, populateFundMeta, renderUpdatedTable, renderSummaryTable, renderExtendedTable, renderCurve, renderStressTable, renderTermTable, setKpis, renderBenchmarkTables } from '../ui/renderers.js';
 
 const VERSION_HISTORY_FILE = 'index.versions.json';
-const APP_VERSION = '6.3.16';
+const APP_VERSION = '6.3.17';
 let SCHOOL_DB = loadDb();
 let REMOTE_SCHOOL_INDEX = {};
 let FIRESTORE = null; let AUTH = null; let firebaseReady = false; let currentUser = null;
@@ -183,10 +183,11 @@ function initPanelLayoutControls(){
 
 const TOP_TAB_KEY = 'feesight.ui.topTab.v1';
 
-function applyTopTab(tab='all'){
+function applyTopTab(tab='overview'){
   const sections = [...document.querySelectorAll('.app-main [data-tab-group]')];
   sections.forEach(section=>{
-    const visible = tab === 'all' || section.dataset.tabGroup === tab;
+    const groups = String(section.dataset.tabGroup || '').split(',').map(v=>v.trim()).filter(Boolean);
+    const visible = !tab || tab === 'all' || groups.includes(tab);
     section.classList.toggle('tab-hidden', !visible);
   });
   document.querySelectorAll('#topTabs .tab-btn').forEach(btn=>btn.classList.toggle('active', btn.dataset.tab === tab));
@@ -201,7 +202,7 @@ function initTopTabs(){
   const tabs = document.getElementById('topTabs');
   if(!tabs) return;
   tabs.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click', ()=>applyTopTab(btn.dataset.tab || 'all')));
-  const saved = localStorage.getItem(TOP_TAB_KEY) || 'all';
+  const saved = localStorage.getItem(TOP_TAB_KEY) || 'overview';
   applyTopTab(saved);
 }
 
@@ -297,7 +298,7 @@ async function saveUserPrefsRemote(){
     const displayMode = localStorage.getItem('feesight.ui.displayMode');
     await FIRESTORE.setDoc(FIRESTORE.doc(FIRESTORE.db, 'users', currentUser.uid, 'prefs', 'layout'), {
       panelLayout: panelLayout ? JSON.parse(panelLayout) : [],
-      topTab: topTab || 'all',
+      topTab: topTab || 'overview',
       displayMode: displayMode || 'table',
       benchmarkData: BENCHMARK_DATA,
       updatedAt: new Date().toISOString()

@@ -153,3 +153,7 @@ body[data-view="simulator"] .insights-panel .kpi:nth-child(-n+3){background:colo
 .data-links a{color:var(--accent)}
 
 .editable-cell{outline:1px dashed var(--accent); background:color-mix(in srgb,var(--surface-2) 88%, var(--accent));}
+
+.objective-grid{display:grid;gap:10px;grid-template-columns:1fr;}
+.objective-card{font-size:16px;line-height:1.35;padding:12px;border:1px solid var(--border-1);border-radius:10px;background:var(--surface-2);}
+@media (min-width:900px){.objective-grid{grid-template-columns:1fr 1fr;}}

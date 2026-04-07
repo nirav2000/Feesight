@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="../../">
 <title>Feesight - School Fees Analyser</title>
 
 <link rel="stylesheet" href="./styles/base.css">
@@ -82,23 +83,12 @@
 
   <main class="app-main">
   <nav class="top-tabs" id="topTabs">
-    <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
-    <button type="button" class="tab-btn" data-tab="plan">Plan</button>
-    <button type="button" class="tab-btn" data-tab="compare">Compare</button>
-    <button type="button" class="tab-btn" data-tab="outcomes">Outcomes</button>
-    <button type="button" class="tab-btn" data-tab="data">Data</button>
+    <button type="button" class="tab-btn active" data-tab="all">All</button>
+    <button type="button" class="tab-btn" data-tab="inputs">Inputs</button>
+    <button type="button" class="tab-btn" data-tab="results">Results</button>
+    <button type="button" class="tab-btn" data-tab="benchmarks">Benchmarks</button>
   </nav>
-  <section id="tab-objectives" data-tab-group="overview" class="card panel">
-    <h2>What this plan answers</h2>
-    <div class="objective-grid">
-      <div class="objective-card"><strong>1.</strong> Total cost for Orley (to 16/18).</div>
-      <div class="objective-card"><strong>2.</strong> Extra spend to stay private longer.</div>
-      <div class="objective-card"><strong>3.</strong> Upcoming fee jumps by stage.</div>
-      <div class="objective-card"><strong>4.</strong> Fee comparison vs nearby schools.</div>
-      <div class="objective-card"><strong>5.</strong> Typical GCSE/A-level outcomes.</div>
-    </div>
-  </section>
-  <section id="tab-inputs" data-tab-group="data" class="card panel table-panel">
+  <section id="tab-inputs" data-tab-group="inputs" class="card panel table-panel">
     <div class="panel-head">
       <h2>School fee table</h2>
       <div class="panel-actions"><span class="pill" id="feeModeBadge"></span><span class="pill" id="schoolCountBadge"></span><button id="addRow">Add fee row</button></div>
@@ -106,38 +96,38 @@
     <div class="table-wrap"><table id="feeInputTable"><thead><tr><th>Academic Year</th><th>Year Group</th><th id="feeValueHeader">Annual Fee (£)</th><th>Annualised Fee (£)</th><th></th></tr></thead><tbody></tbody></table></div>
   </section>
 
-  <section id="tab-insights" data-tab-group="overview" class="card panel insights-panel">
+  <section id="tab-insights" data-tab-group="results" class="card panel insights-panel">
     <h2>Real-world plan from today</h2>
     <div class="meta-line" id="todayMeta"></div>
     <div class="kpis" id="todayKpis"></div>
     <p class="footer-note">The success probabilities are bootstrapped from the selected fund’s stored return history, with fee drawdowns at the beginning of each term.</p>
   </section>
 
-  <section id="tab-comparison" data-tab-group="plan" class="card panel table-panel">
+  <section id="tab-comparison" data-tab-group="results" class="card panel table-panel">
     <h2>Updated comparison table</h2>
     <div class="meta-line" id="comparisonMeta"></div>
     <div class="table-wrap"><table id="updatedTable"></table></div>
   </section>
 
-  <section id="tab-summary" data-tab-group="overview" class="card panel table-panel">
+  <section id="tab-summary" data-tab-group="results" class="card panel table-panel">
     <h2>Summary table</h2>
     <div class="meta-line" id="summaryMeta"></div>
     <div class="table-wrap"><table id="summaryTable"></table></div>
   </section>
 
-  <section id="tab-extended" data-tab-group="plan" class="card panel table-panel">
+  <section id="tab-extended" data-tab-group="results" class="card panel table-panel">
     <h2>Estimated extended fees</h2>
     <div class="meta-line" id="extendedMeta"></div>
     <div class="table-wrap"><table id="extendedTable"></table></div>
   </section>
 
-  <section id="tab-term" data-tab-group="plan" class="card panel table-panel">
+  <section id="tab-term" data-tab-group="results" class="card panel table-panel">
     <h2>Term-by-term drawdown view</h2>
     <div class="meta-line" id="termMeta"></div>
     <div class="table-wrap"><table id="termTable"></table></div>
   </section>
 
-  <div id="tab-probability" data-tab-group="plan" class="grid g2 app-secondary">
+  <div id="tab-probability" data-tab-group="results" class="grid g2 app-secondary">
     <section class="card panel chart-panel">
       <h2>Probability curve</h2>
       <div class="input-grid input-grid-gap">
@@ -156,7 +146,7 @@
     </section>
   </div>
 
-  <section id="tab-benchmarks" data-tab-group="compare,outcomes,data" class="card panel table-panel">
+  <section id="tab-benchmarks" data-tab-group="benchmarks" class="card panel table-panel">
     <h2>School fees and academic benchmark tables</h2>
     <div class="panel-note">Normalized from your raw tables into app row format for MTS, HABS, John Lyon and Orley Farm. Fees shown here are annualised (termly × 3).</div>
     <details open>

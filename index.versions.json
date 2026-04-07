@@ -3,9 +3,19 @@
   "historyFile": "index.versions.json",
   "versions": [
     {
-      "version": "6.3.16",
-      "label": "v6.3.16 (Current)",
+      "version": "6.3.17",
+      "label": "v6.3.17 (Current)",
       "appFile": "index.html",
+      "changes": [
+        "Implemented objective-driven IA tabs: Overview, Plan, Compare, Outcomes, Data",
+        "Added a dedicated objective summary panel for mobile-first decision making",
+        "Remapped section visibility to reduce information overload on small screens"
+      ]
+    },
+    {
+      "version": "6.3.16",
+      "label": "v6.3.16",
+      "appFile": "versions/6.3.16/index.html",
       "changes": [
         "Clarified in-app benchmark note that fees are annualised (termly \u00d7 3)",
         "Archived previous build as v6.3.15"
